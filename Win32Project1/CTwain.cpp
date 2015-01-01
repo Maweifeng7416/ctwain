@@ -17,31 +17,41 @@ CTwain::CTwain()
 
 CTwain::~CTwain()
 {
-	if (_state == 7)
+	ForceStepDown(2);
+	if (_dsmModule)
 	{
-
+		FreeLibrary(_dsmModule);
 	}
-	if (_state == 6)
+}
+
+void CTwain::ForceStepDown(int state){
+
+	if (_state == 7 && _state > state)
 	{
-
+		TW_PENDINGXFERS xfer;
+		DsmEntry(DG_CONTROL, DAT_PENDINGXFERS, MSG_ENDXFER, &xfer);
+		_state = 6;
 	}
-	if (_state == 5)
+	if (_state == 6 && _state > state)
 	{
-
+		TW_PENDINGXFERS xfer;
+		DsmEntry(DG_CONTROL, DAT_PENDINGXFERS, MSG_RESET, &xfer);
+		_state = 5;
 	}
-	if (_state == 4)
+	if (_state == 5 && _state > state)
+	{
+		DsmEntry(DG_CONTROL, DAT_USERINTERFACE, MSG_DISABLEDS, &_ui);
+		_state = 4;
+	}
+	if (_state == 4 && _state > state)
 	{
 		CloseSource();
 		_state = 3;
 	}
-	if (_state == 3)
+	if (_state == 3 && _state > state)
 	{
 		CloseDsm();
 		_state = 2;
-	}
-	if (_dsmModule)
-	{
-		FreeLibrary(_dsmModule);
 	}
 }
 
@@ -85,18 +95,18 @@ void CTwain::FillAppId()
 	strncpy_s(_appId.ProductName, sizeof(_appId.ProductName), "Specific App Product Name", _TRUNCATE);
 }
 
-pTW_IDENTITY CTwain::ShowSelectSourceUI(){
+TW_IDENTITY CTwain::ShowSelectSourceUI(){
 	TW_IDENTITY src;
 	if (_state > 2 && _state <= 7)
 	{
 		auto twRC = _dsmEntry(&_appId, nullptr, DG_CONTROL, DAT_IDENTITY, MSG_USERSELECT, &src);
 	}
-	return &src;
+	return src;
 }
-TW_UINT16 CTwain::OpenSource(pTW_IDENTITY srcId)
+TW_UINT16 CTwain::OpenSource(TW_IDENTITY srcId)
 {
 	TW_UINT16 twRC = TWRC_FAILURE;
-	if (srcId && _state > 2 && _state < 5)
+	if (_state > 2 && _state < 5)
 	{
 		if (_state == 4)
 		{
@@ -104,7 +114,7 @@ TW_UINT16 CTwain::OpenSource(pTW_IDENTITY srcId)
 		}
 
 		_srcId = srcId;
-		twRC = DsmEntry(DG_CONTROL, DAT_IDENTITY, MSG_OPENDS, nullptr);
+		twRC = _dsmEntry(&_appId, nullptr, DG_CONTROL, DAT_IDENTITY, MSG_OPENDS, &_srcId);
 		if (twRC == TWRC_SUCCESS)
 		{
 			_state = 4;
@@ -117,7 +127,7 @@ TW_UINT16 CTwain::CloseSource()
 	TW_UINT16 twRC = TWRC_FAILURE;
 	if (_state == 4)
 	{
-		twRC = DsmEntry(DG_CONTROL, DAT_IDENTITY, MSG_CLOSEDS, nullptr);
+		twRC = _dsmEntry(&_appId, nullptr, DG_CONTROL, DAT_IDENTITY, MSG_CLOSEDS, &_srcId);
 		if (twRC == TWRC_SUCCESS)
 		{
 			_state = 3;
@@ -130,17 +140,36 @@ TW_UINT16 CTwain::EnableSource(bool modal, bool showUI)
 	TW_UINT16 twRC = TWRC_FAILURE;
 	if (_state == 4)
 	{
-		TW_USERINTERFACE ui;
-		ui.hParent = &_handle;
-		ui.ModalUI = modal ? 1 : 0;
-		ui.ShowUI = showUI ? 1 : 0;
-		twRC = DsmEntry(DG_CONTROL, DAT_IDENTITY, MSG_ENABLEDS, &ui);
+		_ui.hParent = _handle;
+		_ui.ModalUI = modal ? TRUE : FALSE;
+		_ui.ShowUI = showUI ? TRUE : FALSE;
+		twRC = DsmEntry(DG_CONTROL, DAT_USERINTERFACE, MSG_ENABLEDS, &_ui);
+		if (twRC == TWRC_SUCCESS)
+		{
+			_state = 5;
+		}
 	}
 	return twRC;
 }
-bool CTwain::HandleTwainMessage(const MSG* msg)
+TW_UINT16 CTwain::EnableSourceUIOnly(bool modal)
 {
-	if (_srcId && _dsmEntry)
+	TW_UINT16 twRC = TWRC_FAILURE;
+	if (_state == 4)
+	{
+		_ui.hParent = _handle;
+		_ui.ModalUI = modal ? TRUE : FALSE;
+		_ui.ShowUI = TRUE;
+		twRC = DsmEntry(DG_CONTROL, DAT_USERINTERFACE, MSG_ENABLEDSUIONLY, &_ui);
+		if (twRC == TWRC_SUCCESS)
+		{
+			_state = 5;
+		}
+	}
+	return twRC;
+}
+bool CTwain::IsTwainMessage(const MSG* msg)
+{
+	if (_state > 3 && _dsmEntry)
 	{
 		TW_EVENT evt;
 		evt.pEvent = (TW_MEMREF) msg;
@@ -149,8 +178,18 @@ bool CTwain::HandleTwainMessage(const MSG* msg)
 		{
 			switch (evt.TWMessage){
 			case MSG_XFERREADY:
+				_state = 6;
+				break;
 			case MSG_CLOSEDSREQ:
 			case MSG_CLOSEDSOK:
+				twRC = DsmEntry(DG_CONTROL, DAT_USERINTERFACE, MSG_DISABLEDS, &_ui);
+				if (twRC == TWRC_SUCCESS)
+				{
+					_state = 4;
+				}
+				break;
+			case MSG_DEVICEEVENT:
+				break;
 			case MSG_NULL:
 				break;
 			default:
@@ -167,7 +206,7 @@ TW_UINT16 CTwain::DsmEntry(TW_UINT32 DG, TW_UINT16 DAT, TW_UINT16 MSG, TW_MEMREF
 {
 	if (_dsmEntry)
 	{
-		return _dsmEntry(&_appId, _srcId, DG, DAT, MSG, pData);
+		return _dsmEntry(&_appId, &_srcId, DG, DAT, MSG, pData);
 	}
 	return TWRC_FAILURE;
 }

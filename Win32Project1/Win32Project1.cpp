@@ -28,10 +28,6 @@ int APIENTRY _tWinMain(_In_ HINSTANCE hInstance,
 	UNREFERENCED_PARAMETER(hPrevInstance);
 	UNREFERENCED_PARAMETER(lpCmdLine);
 
-	// TODO: Place code here.
-	MSG msg;
-	HACCEL hAccelTable;
-
 	// Initialize global strings
 	LoadString(hInstance, IDS_APP_TITLE, szTitle, MAX_LOADSTRING);
 	LoadString(hInstance, IDC_WIN32PROJECT1, szWindowClass, MAX_LOADSTRING);
@@ -43,14 +39,18 @@ int APIENTRY _tWinMain(_In_ HINSTANCE hInstance,
 		return FALSE;
 	}
 
+	// TODO: Place code here.
+	twain = new CTwain();
+	MSG msg;
+	HACCEL hAccelTable;
+
 	hAccelTable = LoadAccelerators(hInstance, MAKEINTRESOURCE(IDC_WIN32PROJECT1));
 
-	twain = new CTwain();
 
 	// Main message loop:
 	while (GetMessage(&msg, NULL, 0, 0))
 	{
-		if (!twain->HandleTwainMessage(&msg)){
+		if (!twain->IsTwainMessage(&msg)){
 			if (!TranslateAccelerator(msg.hwnd, hAccelTable, &msg))
 			{
 				TranslateMessage(&msg);
@@ -157,10 +157,14 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			if (twain->GetState() > 2)
 			{
 				auto src = twain->ShowSelectSourceUI();
-				if (src){
-					auto twRC = twain->OpenSource(src);
-				}
+				auto twRC = twain->OpenSource(src);
 			}
+			break;
+		case ID_FILE_SOURCESETTINGS:
+			twain->EnableSourceUIOnly(true);
+			break;
+		case ID_FILE_ACQUIRE:
+			twain->EnableSource(true, false);
 			break;
 		default:
 			return DefWindowProc(hWnd, message, wParam, lParam);
