@@ -3,8 +3,8 @@
 
 #include "stdafx.h"
 #include "Win32Project1.h"
-#include "twain2.3.h"
 #include "TwainSession.h"
+#include <memory>
 
 #define MAX_LOADSTRING 100
 
@@ -12,7 +12,7 @@
 HINSTANCE hInst;								// current instance
 TCHAR szTitle[MAX_LOADSTRING];					// The title bar text
 TCHAR szWindowClass[MAX_LOADSTRING];			// the main window class name
-TwainSession* twain;
+std::shared_ptr<TwainSession> twain;
 
 // Forward declarations of functions included in this code module:
 ATOM				MyRegisterClass(HINSTANCE hInstance);
@@ -33,32 +33,36 @@ int APIENTRY _tWinMain(_In_ HINSTANCE hInstance,
 	LoadString(hInstance, IDC_WIN32PROJECT1, szWindowClass, MAX_LOADSTRING);
 	MyRegisterClass(hInstance);
 
-	// Perform application initialization:
-	if (!InitInstance(hInstance, nCmdShow))
+	// my code
+	twain = std::make_shared<TwainSession>();
+	if (twain->Initialize() && InitInstance(hInstance, nCmdShow))
 	{
-		return FALSE;
-	}
+		HACCEL hAccelTable = LoadAccelerators(hInstance, MAKEINTRESOURCE(IDC_WIN32PROJECT1));
+		MSG msg;
 
-	// TODO: Place code here.
-	twain = new TwainSession();
-	MSG msg;
-	HACCEL hAccelTable;
-
-	hAccelTable = LoadAccelerators(hInstance, MAKEINTRESOURCE(IDC_WIN32PROJECT1));
-
-
-	// Main message loop:
-	while (GetMessage(&msg, NULL, 0, 0))
-	{
-		if (!twain->IsTwainMessage(&msg)){
-			if (!TranslateAccelerator(msg.hwnd, hAccelTable, &msg))
-			{
-				TranslateMessage(&msg);
-				DispatchMessage(&msg);
+		// Main message loop:
+		while (GetMessage(&msg, NULL, 0, 0))
+		{
+			if (!twain->IsTwainMessage(msg)){
+				if (!TranslateAccelerator(msg.hwnd, hAccelTable, &msg))
+				{
+					TranslateMessage(&msg);
+					DispatchMessage(&msg);
+				}
 			}
 		}
+		return (int) msg.wParam;
 	}
-	return (int) msg.wParam;
+	else
+	{
+		if (twain->IsDsmInitialized()){
+			MessageBox(nullptr, L"Could not create window.", L"Error Initializing", MB_ICONERROR);
+		}
+		else{
+			MessageBox(nullptr, L"Could not load TWAIN dsm.", L"Error Initializing", MB_ICONERROR);
+		}
+		return FALSE;
+	}
 }
 
 
@@ -156,6 +160,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			}
 			if (twain->GetState() > 2)
 			{
+				auto test = twain->GetDsmStatus();
 				auto src = twain->ShowSourceSelector();
 				auto twRC = twain->OpenSource(src);
 			}
@@ -176,7 +181,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		EndPaint(hWnd, &ps);
 		break;
 	case WM_DESTROY:
-		delete twain;
+		twain->ForceStepDown(2);
 		PostQuitMessage(0);
 		break;
 	default:

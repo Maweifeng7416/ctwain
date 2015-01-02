@@ -1,5 +1,7 @@
 #pragma once
 #include "twain2.3.h"
+#include <memory>
+
 
 /// <summary>
 /// Contains event data when a data transfer is ready to be processed.
@@ -48,25 +50,30 @@ class TwainSession
 {
 private:
 	HMODULE _dsmModule = nullptr;
-	TW_IDENTITY _appId;
-	TW_IDENTITY _srcId;
+	std::unique_ptr<TW_IDENTITY> _appId;
+	std::shared_ptr<TW_IDENTITY> _srcId;
 	DSMENTRYPROC _dsmEntry = nullptr;
 	HWND _handle = nullptr;
 	TW_USERINTERFACE _ui;
 	int _state = 1;
 	void FillAppId();
 	void DisableSource();
-	void ForceStepDown(int state);
 	void DoTransfer();
 public:
 	TwainSession();
 	~TwainSession();
+	void ForceStepDown(int state);
 
 	/// <summary>
 	/// Gets the current state number as defined by the TWAIN spec.
 	/// </summary>
 	/// <returns></returns>
 	int GetState(){ return _state; }
+
+	/// <summary>
+	/// Quick flag to check if the DSM dll has been loaded.
+	/// </summary>
+	bool IsDsmInitialized(){ return _state > 1; }
 
 	/// <summary>
 	/// Quick flag to check if the DSM has been opened.
@@ -88,19 +95,21 @@ public:
 	/// </summary>
 	bool IsTransferring(){ return _state > 5; }
 
+	bool Initialize();
+
 	void OpenDsm(HWND handle);
 	void CloseDsm();
 
-	TW_STATUS GetDsmStatus();
-	TW_STATUS GetSourceStatus();
+	std::unique_ptr<TW_STATUS> GetDsmStatus();
+	std::unique_ptr<TW_STATUS> GetSourceStatus();
 
-	TW_IDENTITY ShowSourceSelector();
-	TW_UINT16 OpenSource(TW_IDENTITY& srcId);
+	std::shared_ptr<TW_IDENTITY> ShowSourceSelector();
+	TW_UINT16 OpenSource(std::shared_ptr<TW_IDENTITY> srcId);
 	TW_UINT16 CloseSource();
 	TW_UINT16 EnableSource(bool modal, bool showUI);
 	TW_UINT16 EnableSourceUIOnly(bool modal);
 
-	bool IsTwainMessage(const MSG* message);
+	bool IsTwainMessage(const MSG& message);
 	TW_UINT16 DsmEntry(TW_UINT32 DG, TW_UINT16 DAT, TW_UINT16 MSG, TW_MEMREF pData);
 
 	__event void DeviceEvent(const TW_DEVICEEVENT& deviceEvent);
