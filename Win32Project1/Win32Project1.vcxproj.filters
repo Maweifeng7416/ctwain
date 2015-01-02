@@ -33,7 +33,7 @@
     <ClInclude Include="twain2.3.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="CTwain.h">
+    <ClInclude Include="TwainSession.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -44,7 +44,7 @@
     <ClCompile Include="Win32Project1.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="CTwain.cpp">
+    <ClCompile Include="TwainSession.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

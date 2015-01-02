@@ -4,7 +4,7 @@
 #include "stdafx.h"
 #include "Win32Project1.h"
 #include "twain2.3.h"
-#include "CTwain.h"
+#include "TwainSession.h"
 
 #define MAX_LOADSTRING 100
 
@@ -12,7 +12,7 @@
 HINSTANCE hInst;								// current instance
 TCHAR szTitle[MAX_LOADSTRING];					// The title bar text
 TCHAR szWindowClass[MAX_LOADSTRING];			// the main window class name
-CTwain* twain;
+TwainSession* twain;
 
 // Forward declarations of functions included in this code module:
 ATOM				MyRegisterClass(HINSTANCE hInstance);
@@ -40,7 +40,7 @@ int APIENTRY _tWinMain(_In_ HINSTANCE hInstance,
 	}
 
 	// TODO: Place code here.
-	twain = new CTwain();
+	twain = new TwainSession();
 	MSG msg;
 	HACCEL hAccelTable;
 
@@ -156,7 +156,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			}
 			if (twain->GetState() > 2)
 			{
-				auto src = twain->ShowSelectSourceUI();
+				auto src = twain->ShowSourceSelector();
 				auto twRC = twain->OpenSource(src);
 			}
 			break;
