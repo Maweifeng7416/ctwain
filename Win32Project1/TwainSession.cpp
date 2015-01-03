@@ -367,8 +367,8 @@ TW_UINT16 TwainSessionImpl::CloseSource()
 
 TwainSession::TwainSession() :_pimpl(new TwainSessionImpl())
 {
-	auto sz1 = sizeof(TwainSession);
-	auto sz2 = sizeof(TwainSessionImpl);
+	/*auto sz1 = sizeof(TwainSession);
+	auto sz2 = sizeof(TwainSessionImpl);*/
 }
 TwainSession::TwainSession(const TwainSession& other)
 	: _pimpl(new TwainSessionImpl(*other._pimpl)) {
@@ -413,10 +413,7 @@ bool TwainSession::IsSourceOpen(){ return _pimpl->_state > 3; }
 bool TwainSession::IsSourceEnabled(){ return _pimpl->_state > 4; }
 bool TwainSession::IsTransferring(){ return _pimpl->_state > 5; }
 
-void TwainSession::ForceStepDown(int state){
-
-	_pimpl->ForceStepDown(state);
-}
+void TwainSession::ForceStepDown(int state){ _pimpl->ForceStepDown(state); }
 
 bool TwainSession::Initialize()
 {
@@ -425,60 +422,28 @@ bool TwainSession::Initialize()
 	return IsDsmInitialized();
 }
 
-void TwainSession::OpenDsm(TW_MEMREF hWnd)
-{
-	_pimpl->OpenDsm(hWnd);
-}
-void TwainSession::CloseDsm()
-{
-	_pimpl->CloseDsm();
-}
+void TwainSession::OpenDsm(TW_MEMREF hWnd) { _pimpl->OpenDsm(hWnd); }
+void TwainSession::CloseDsm(){ _pimpl->CloseDsm(); }
 
-TW_STATUS TwainSession::GetDsmStatus()
-{
-	return _pimpl->GetDsmStatus();
-}
-TW_STATUS TwainSession::GetSourceStatus()
-{
-	return _pimpl->GetSourceStatus();
-}
+TW_STATUS TwainSession::GetDsmStatus(){ return _pimpl->GetDsmStatus(); }
+TW_STATUS TwainSession::GetSourceStatus(){ return _pimpl->GetSourceStatus(); }
 
-std::unique_ptr<TW_IDENTITY> TwainSession::ShowSourceSelector()
-{
-	return _pimpl->ShowSourceSelector();
-}
+std::unique_ptr<TW_IDENTITY> TwainSession::ShowSourceSelector(){ return _pimpl->ShowSourceSelector(); }
 
-std::unique_ptr<TW_IDENTITY> TwainSession::GetDefaultSource()
-{
-	return _pimpl->GetDefaultSource();
-}
-std::vector<std::unique_ptr<TW_IDENTITY>> TwainSession::GetSources(){
-	return _pimpl->GetSources();
-}
+std::unique_ptr<TW_IDENTITY> TwainSession::GetDefaultSource(){ return _pimpl->GetDefaultSource(); }
+std::vector<std::unique_ptr<TW_IDENTITY>> TwainSession::GetSources(){ return _pimpl->GetSources(); }
 
-TW_UINT16 TwainSession::OpenSource(TW_IDENTITY& source)
-{
-	return _pimpl->OpenSource(source);
-}
-TW_UINT16 TwainSession::CloseSource()
-{
-	return _pimpl->CloseSource();
-}
-TW_UINT16 TwainSession::EnableSource(bool modal, bool showUI)
-{
-	return _pimpl->EnableSource(false, showUI, modal);
-}
-TW_UINT16 TwainSession::EnableSourceUIOnly(bool modal)
-{
-	return _pimpl->EnableSource(true, true, modal);
-}
+TW_UINT16 TwainSession::OpenSource(TW_IDENTITY& source){ return _pimpl->OpenSource(source); }
+TW_UINT16 TwainSession::CloseSource(){ return _pimpl->CloseSource(); }
+TW_UINT16 TwainSession::EnableSource(bool modal, bool showUI){ return _pimpl->EnableSource(false, showUI, modal); }
+TW_UINT16 TwainSession::EnableSourceUIOnly(bool modal){ return _pimpl->EnableSource(true, true, modal); }
 
 bool TwainSession::IsTwainMessage(const MSG& msg)
 {
 	if (_pimpl->_state > 4)
 	{
 		TW_EVENT evt{ const_cast<MSG*>(&msg) };
-		TW_UINT16 twRC = DsmEntry(DG_CONTROL, DAT_EVENT, MSG_PROCESSEVENT, &evt);
+		TW_UINT16 twRC = _pimpl->DsmEntry(true, DG_CONTROL, DAT_EVENT, MSG_PROCESSEVENT, &evt);
 		if (twRC == TWRC_DSEVENT)
 		{
 			_pimpl->HandleDsmMessage(evt.TWMessage);
@@ -488,7 +453,4 @@ bool TwainSession::IsTwainMessage(const MSG& msg)
 	return false;
 }
 
-TW_UINT16 TwainSession::DsmEntry(TW_UINT32 DG, TW_UINT16 DAT, TW_UINT16 MSG, TW_MEMREF pData)
-{
-	return _pimpl->DsmEntry(true, DG, DAT, MSG, pData);
-}
+TW_UINT16 TwainSession::DsmEntry(TW_UINT32 DG, TW_UINT16 DAT, TW_UINT16 MSG, TW_MEMREF pData){ return _pimpl->DsmEntry(true, DG, DAT, MSG, pData); }
