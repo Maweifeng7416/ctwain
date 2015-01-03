@@ -1,8 +1,10 @@
-#pragma once
+#ifndef TWAIN_SESSION_H_
+#define TWAIN_SESSION_H_
+
 
 #include <memory>
 #include <vector>
-#include "TwainInterop.h"
+#include "twain_interop.h"
 
 
 /// <summary>
@@ -49,11 +51,9 @@ struct TransferReadyEventArgs
 /// <summary>
 /// Basic class for interfacing with TWAIN. You should only have one of this per application process.
 /// </summary>
-[event_source(native)]
+//[event_source(native)]
 class TwainSession
 {
-private:
-	class TwainSessionImpl* _pimpl;
 public:
 	TwainSession(); 
 	TwainSession(const TwainSession&);            // Copy constructor
@@ -61,7 +61,8 @@ public:
 	TwainSession& operator=(const TwainSession&); // Copy assignment operator
 	~TwainSession();
 
-	virtual void FillAppId(TW_IDENTITY& appId);
+	virtual void FillAppId(TW_IDENTITY& app_id);
+
 	/// <summary>
 	/// Gets the current state number as defined by the TWAIN spec.
 	/// </summary>
@@ -110,7 +111,8 @@ public:
 	/// Opens the data source manager. Calls to this must be followed by
 	/// <see cref="CloseDsm" /> when done with a TWAIN session.
 	/// </summary>
-	void OpenDsm(TW_MEMREF hWnd = nullptr);
+	/// <param name="window_handle">The window handle on Windows system to act as the parent.</param>
+	void OpenDsm(TW_MEMREF window_handle = nullptr);
 
 	/// <summary>
 	/// Closes the data source manager.
@@ -142,6 +144,7 @@ public:
 
 	/// <summary>
 	/// Opens the source for capability negotiation.
+	/// <param name="source">The source id to open.</param>
 	/// </summary>
 	TW_UINT16 OpenSource(TW_IDENTITY& source);
 	/// <summary>
@@ -152,8 +155,8 @@ public:
 	/// Enables the source to start transferring.
 	/// </summary>
 	/// <param name="modal">if set to <c>true</c> any driver UI will display as modal.</param>
-	/// <param name="showUI">if set to <c>true</c> then show the driver UI.</param>
-	TW_UINT16 EnableSource(bool modal, bool showUI);
+	/// <param name="show_ui">if set to <c>true</c> then show the driver UI.</param>
+	TW_UINT16 EnableSource(bool modal, bool show_ui);
 	/// <summary>
 	/// Shows the source's driver UI without transferring.
 	/// </summary>
@@ -164,13 +167,24 @@ public:
 	/// Checks and handles the message if it's a TWAIN message
 	/// from inside a Windows message loop.
 	/// </summary>
+	/// <param name="message">The message from Windows message loop.</param>
 	bool IsTwainMessage(const MSG& message);
 
 	/// <summary>
 	/// Raw dsm entry call using current source.
 	/// </summary>
-	TW_UINT16 DsmEntry(TW_UINT32 DG, TW_UINT16 DAT, TW_UINT16 MSG, TW_MEMREF pData);
+	/// <param name="data_group">The DG_* value.</param>
+	/// <param name="data_argument_type">The DAT_* value.</param>
+	/// <param name="message">The MSG_* value.</param>
+	/// <param name="data">The data pointer.</param>
+	/// <returns></returns>
+	TW_UINT16 DsmEntry(
+		TW_UINT32    data_group,
+		TW_UINT16    data_argument_type,
+		TW_UINT16    message,
+		TW_MEMREF    data);
 
+/*
 	/// <summary>
 	/// Occurs when the source has generated an event.
 	/// </summary>
@@ -178,6 +192,10 @@ public:
 	/// <summary>
 	/// Occurs when a data transfer is ready.
 	/// </summary>
-	__event void TransferReady(TransferReadyEventArgs& readyEvent);
+	__event void TransferReady(TransferReadyEventArgs& readyEvent);*/
+
+private:
+	class TwainSessionImpl* pimpl_;
 };
 
+#endif //TWAIN_SESSION_H_

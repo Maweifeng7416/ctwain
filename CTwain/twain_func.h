@@ -1,16 +1,15 @@
-#pragma once
+#ifndef TWAIN_FUNC_H_
+#define TWAIN_FUNC_H_
 
-#include "TwainInterop.h"
+
+#include "twain_interop.h"
 
 /// <summary>
-/// Contains all the TWAIN-related function calls.
+/// Contains all the function calls required to interop with TWAIN.
+/// This class should not be used by typical consumers.
 /// </summary>
 class TwainFunc
 {
-private:
-	static HMODULE _dsmModule;
-	static DSMENTRYPROC _dsmEntry;
-	static TW_ENTRYPOINT _memEntry;
 public:	
 	/// <summary>
 	/// Loads the DSM library.
@@ -25,30 +24,31 @@ public:
 	/// <summary>
 	/// Updates the memory management function entry with current app id.
 	/// </summary>
-	/// <param name="entryPoint">The entry point.</param>
-	static void UpdateMemoryEntry(pTW_IDENTITY appId);
+	/// <param name="app_id">The pointer to application id.</param>
+	static void UpdateMemoryEntry(pTW_IDENTITY app_id);
 
 	/// <summary>
 	/// Main DSM entry method.
 	/// </summary>
-	/// <param name="pOrigin">The origin.</param>
-	/// <param name="pDest">The dest.</param>
-	/// <param name="DG">The DG value.</param>
-	/// <param name="DAT">The DAT value.</param>
-	/// <param name="MSG">The MSG value.</param>
-	/// <param name="pData">The data.</param>
+	/// <param name="origin">The caller id.</param>
+	/// <param name="destination">The destination id.</param>
+	/// <param name="data_group">The DG_* value.</param>
+	/// <param name="data_argument_type">The DAT_* value.</param>
+	/// <param name="message">The MSG_* value.</param>
+	/// <param name="data">The data pointer.</param>
 	/// <returns></returns>
 	static TW_UINT16 DSM_Entry(
-		pTW_IDENTITY pOrigin,
-		pTW_IDENTITY pDest,
-		TW_UINT32    DG,
-		TW_UINT16    DAT,
-		TW_UINT16    MSG,
-		TW_MEMREF    pData);
+		pTW_IDENTITY origin,
+		pTW_IDENTITY destination,
+		TW_UINT32    data_group,
+		TW_UINT16    data_argument_type,
+		TW_UINT16    message,
+		TW_MEMREF    data);
 	
 
 	/// <summary>
-	/// Function to allocate memory. Calls to this must be coupled with <see cref="Free"/> later.
+	/// Function to allocate memory. Calls to this must be coupled with 
+	/// <see cref="Free"/> later.
 	/// </summary>
 	/// <param name="size">The size in bytes.</param>
 	/// <returns>Handle to the allocated memory.</returns>
@@ -61,7 +61,8 @@ public:
 	void Free(TW_HANDLE handle);
 
 	/// <summary>
-	/// Function to lock some memory. Calls to this must be coupled with <see cref="Unlock"/> later.
+	/// Function to lock some memory. Calls to this must be coupled with 
+	/// <see cref="Unlock"/> later.
 	/// </summary>
 	/// <param name="handle">The handle to allocated memory.</param>
 	/// <returns>Handle to the lock.</returns>
@@ -72,5 +73,11 @@ public:
 	/// </summary>
 	/// <param name="handle">The handle from <see cref="Lock"/>.</param>
 	void Unlock(TW_HANDLE handle);
+
+private:
+	static HMODULE dsm_module_;
+	static DSMENTRYPROC dsm_entry_;
+	static TW_ENTRYPOINT memory_entry_;
 };
 
+#endif //TWAIN_FUNC_H_

@@ -1,6 +1,6 @@
 
-#ifndef _TWAININTEROP_H
-#define _TWAININTEROP_H
+#ifndef TWAIN_INTEROP_H_
+#define TWAIN_INTEROP_H_
 
 
 #include "twain2.3.h"
@@ -31,4 +31,4 @@ struct tagMSG; // Forward or never
 typedef tagMSG MSG;
 #endif
 
-#endif //_TWAININTEROP_H
+#endif //TWAIN_INTEROP_H_

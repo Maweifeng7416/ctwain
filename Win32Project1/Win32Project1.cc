@@ -3,7 +3,7 @@
 
 #include "stdafx.h"
 #include "Win32Project1.h"
-#include "TwainSession.h"
+#include "twain_session.h"
 #include <memory>
 #include <iostream>
 
