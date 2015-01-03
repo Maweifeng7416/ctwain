@@ -5,6 +5,7 @@
 #include "Win32Project1.h"
 #include "TwainSession.h"
 #include <memory>
+#include <iostream>
 
 #define MAX_LOADSTRING 100
 
