@@ -160,9 +160,16 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			}
 			if (twain->GetState() > 2)
 			{
-				auto test = twain->GetDsmStatus();
+				auto list = twain->GetSources();
+				auto def = twain->GetDefaultSource();
+
 				auto src = twain->ShowSourceSelector();
-				auto twRC = twain->OpenSource(src);
+				if (src){
+					auto twRC = twain->OpenSource(*src);
+				}
+				else{
+					auto test = twain->GetDsmStatus();
+				}
 			}
 			break;
 		case ID_FILE_SOURCESETTINGS:
