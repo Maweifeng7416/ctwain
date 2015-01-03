@@ -2,7 +2,7 @@
 
 #include <memory>
 #include <vector>
-#include "twain2.3.h"
+#include "TwainInterop.h"
 
 
 /// <summary>
@@ -44,10 +44,6 @@ struct TransferReadyEventArgs
 	std::unique_ptr<pTW_AUDIOINFO> AudioInfo;
 };
 
-#ifndef _WINUSER_
-struct tagMSG; // Forward or never
-typedef tagMSG MSG;
-#endif
 
 
 /// <summary>

@@ -36,6 +36,12 @@
     <ClInclude Include="TwainSession.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="TwainFunc.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="TwainInterop.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -45,6 +51,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="TwainSession.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="TwainFunc.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

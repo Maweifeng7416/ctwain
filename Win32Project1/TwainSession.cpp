@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "TwainSession.h"
+#include "TwainFunc.h"
 #include <iostream>
 
 ///////////////////////////////////////////////////////
@@ -8,8 +9,6 @@
 
 struct TwainSessionImpl{
 
-	HMODULE _dsmModule = nullptr;
-	DSMENTRYPROC _dsmEntry = nullptr;
 	TW_MEMREF _hWnd = nullptr;
 	int _state = 1;
 
@@ -39,6 +38,15 @@ struct TwainSessionImpl{
 	void ForceStepDown(int state);
 };
 
+struct RunHandleDsmMsgHack{
+	TwainSessionImpl* Instance;
+	TW_UINT16 Msg;
+	operator unsigned short() const { return TWRC_SUCCESS; }
+	~RunHandleDsmMsgHack(){
+		Instance->HandleDsmMessage(Msg);
+	}
+};
+
 // hack to use static func for callback with current session instance
 struct CallbackHack{
 
@@ -53,8 +61,9 @@ struct CallbackHack{
 		if (Instance){
 			auto inst = *Instance;
 			if (orig && orig->Id == inst._srcId.Id){
-				inst.HandleDsmMessage(msg);
-				return TWRC_SUCCESS;
+				RunHandleDsmMsgHack hack{ Instance, msg };
+				//inst.HandleDsmMessage(msg);
+				return hack;
 			}
 		}
 		return TWRC_FAILURE;
@@ -66,27 +75,11 @@ TwainSessionImpl* CallbackHack::Instance = nullptr;
 
 
 TwainSessionImpl::~TwainSessionImpl(){
-	_dsmEntry = nullptr;
-	if (_dsmModule)
-	{
-		FreeLibrary(_dsmModule);
-		_dsmModule = nullptr;
-	}
+	TwainFunc::UninitializeDSM();
 }
 void TwainSessionImpl::Init(){
-	if (!_dsmModule){
-		_dsmModule = LoadLibrary(L"twaindsm.dll");
-		if (_dsmModule)
-		{
-			_dsmEntry = (DSMENTRYPROC) GetProcAddress(_dsmModule, "DSM_Entry");
-			if (_dsmEntry){
-				_state = 2;
-			}
-			else{
-				FreeLibrary(_dsmModule);
-				_dsmModule = nullptr;
-			}
-		}
+	if (TwainFunc::InitializeDSM()){
+		_state = 2;
 	}
 }
 void TwainSessionImpl::TryRegisterCallback(){
@@ -147,8 +140,7 @@ void TwainSessionImpl::DoTransfer()
 
 	do
 	{
-		TransferReadyEventArgs preXferArgs;
-		memset(&preXferArgs, 0, sizeof(preXferArgs));
+		TransferReadyEventArgs preXferArgs{ 0 };
 		//TransferReady(preXferArgs);
 		if (preXferArgs.CancelAll)
 		{
@@ -186,13 +178,12 @@ void TwainSessionImpl::HandleDsmMessage(TW_UINT16 msg){
 		DisableSource();
 		break;
 	case MSG_DEVICEEVENT:
-		TW_DEVICEEVENT de;
-		memset(&de, 0, sizeof(de));
-		if (DsmEntry(true, DG_CONTROL, DAT_DEVICEEVENT, MSG_GET, &de) == TWRC_SUCCESS)
-		{
-			//DeviceEvent(de);
-		}
-		break;
+		//TW_DEVICEEVENT de{ 0 };
+		//if (DsmEntry(true, DG_CONTROL, DAT_DEVICEEVENT, MSG_GET, &de) == TWRC_SUCCESS)
+		//{
+		//	//DeviceEvent(de);
+		//}
+		//break;
 	case MSG_NULL:
 		break;
 	default:
@@ -202,13 +193,9 @@ void TwainSessionImpl::HandleDsmMessage(TW_UINT16 msg){
 }
 TW_UINT16 TwainSessionImpl::DsmEntry(bool includeSource, TW_UINT32 DG, TW_UINT16 DAT, TW_UINT16 MSG, TW_MEMREF pData)
 {
-	if (_state > 1)
-	{
-		return includeSource ?
-			_dsmEntry(&_appId, &_srcId, DG, DAT, MSG, pData) :
-			_dsmEntry(&_appId, nullptr, DG, DAT, MSG, pData);
-	}
-	return TWRC_FAILURE;
+	return includeSource ?
+		TwainFunc::DSM_Entry(&_appId, &_srcId, DG, DAT, MSG, pData) :
+		TwainFunc::DSM_Entry(&_appId, nullptr, DG, DAT, MSG, pData);
 }
 
 void TwainSessionImpl::ForceStepDown(int state){
@@ -251,6 +238,7 @@ void TwainSessionImpl::OpenDsm(TW_MEMREF hWnd)
 		if (rc == TWRC_SUCCESS)
 		{
 			_state = 3;
+			TwainFunc::UpdateMemoryEntry(&_appId);
 		}
 	}
 }
@@ -262,6 +250,7 @@ void TwainSessionImpl::CloseDsm()
 		if (rc == TWRC_SUCCESS)
 		{
 			_state = 2;
+			TwainFunc::UpdateMemoryEntry(nullptr);
 		}
 	}
 }
