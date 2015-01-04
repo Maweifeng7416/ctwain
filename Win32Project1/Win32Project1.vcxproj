@@ -101,14 +101,7 @@
     <Image Include="Win32Project1.ico" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\CTwain\CTwain.vcxproj">
-      <Project>{f2dcb328-aaa7-4c6a-bb6b-73ce48d9d626}</Project>
-      <Private>true</Private>
-      <ReferenceOutputAssembly>true</ReferenceOutputAssembly>
-      <CopyLocalSatelliteAssemblies>true</CopyLocalSatelliteAssemblies>
-      <LinkLibraryDependencies>true</LinkLibraryDependencies>
-      <UseLibraryDependencyInputs>true</UseLibraryDependencyInputs>
-    </ProjectReference>
+    <Library Include="..\Debug\CTwain.lib" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
