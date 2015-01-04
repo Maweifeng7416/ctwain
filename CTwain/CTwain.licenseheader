@@ -1,3 +1,5 @@
+extensions: designer.cs generated.cs
+extensions: .cs .cpp .h .cc
 // The MIT License (MIT)
 // Copyright (c) 2015 Yin-Chun Wang
 //
@@ -20,23 +22,3 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE 
 // OR OTHER DEALINGS IN THE SOFTWARE.
 //
-
-#pragma once
-
-//#include "targetver.h"
-//#include <SDKDDKVer.h>
-
-
-#define WIN32_LEAN_AND_MEAN             // Exclude rarely-used stuff from Windows headers
-// Windows Header Files:
-#include <windows.h>
-
-// C RunTime Header Files
-//#include <stdlib.h>
-//#include <malloc.h>
-//#include <memory.h>
-//#include <tchar.h>
-
-
-// TODO: reference additional headers your program requires here
-#include "twain2.3.h"
