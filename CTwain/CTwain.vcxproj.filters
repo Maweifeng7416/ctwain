@@ -27,6 +27,12 @@
     <ClInclude Include="stdafx.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="message_loop.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="registered_window.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="twain_session.cc">
@@ -36,6 +42,12 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="twain_func.cc">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="message_loop.cc">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="registered_window.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

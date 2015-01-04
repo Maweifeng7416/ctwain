@@ -9,6 +9,8 @@
 
 #define MAX_LOADSTRING 100
 
+using namespace ctwain;
+
 // Global Variables:
 HINSTANCE hInst;								// current instance
 TCHAR szTitle[MAX_LOADSTRING];					// The title bar text
@@ -109,7 +111,7 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 	HWND hWnd;
 
 	hInst = hInstance; // Store instance handle in our global variable
-
+	
 	hWnd = CreateWindow(szWindowClass, szTitle, WS_OVERLAPPEDWINDOW,
 		CW_USEDEFAULT, 0, CW_USEDEFAULT, 0, NULL, NULL, hInstance, NULL);
 
