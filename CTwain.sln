@@ -4,6 +4,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 VisualStudioVersion = 12.0.31101.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Win32Project1", "Win32Project1\Win32Project1.vcxproj", "{91791386-D581-44A5-8AD6-E5ED4E20D3A2}"
+	ProjectSection(ProjectDependencies) = postProject
+		{F2DCB328-AAA7-4C6A-BB6B-73CE48D9D626} = {F2DCB328-AAA7-4C6A-BB6B-73CE48D9D626}
+	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "CTwain", "CTwain\CTwain.vcxproj", "{F2DCB328-AAA7-4C6A-BB6B-73CE48D9D626}"
 EndProject

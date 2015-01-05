@@ -22,15 +22,15 @@
 //
 
 #include "stdafx.h"
-#include "twain_func.h"
+#include "entry_points.h"
 
 namespace ctwain{
 
-	HMODULE TwainFunc::dsm_module_ = nullptr;
-	DSMENTRYPROC TwainFunc::dsm_entry_ = nullptr;
-	TW_ENTRYPOINT TwainFunc::memory_entry_{ 0 };
+	HMODULE EntryPoints::dsm_module_ = nullptr;
+	DSMENTRYPROC EntryPoints::dsm_entry_ = nullptr;
+	TW_ENTRYPOINT EntryPoints::memory_entry_{ 0 };
 
-	bool TwainFunc::InitializeDSM(){
+	bool EntryPoints::InitializeDSM(){
 		if (!dsm_module_){
 
 #ifdef TWH_CMP_MSC
@@ -53,7 +53,7 @@ namespace ctwain{
 	}
 
 
-	void TwainFunc::UninitializeDSM() {
+	void EntryPoints::UninitializeDSM() {
 		dsm_entry_ = nullptr;
 		if (dsm_module_) {
 			UNLOADLIBRARY(dsm_module_);
@@ -61,14 +61,14 @@ namespace ctwain{
 		}
 	}
 
-	TW_UINT16 TwainFunc::DSM_Entry(pTW_IDENTITY orig, pTW_IDENTITY dest, TW_UINT32 DG, TW_UINT16 DAT, TW_UINT16 MSG, TW_MEMREF pData) {
+	TW_UINT16 EntryPoints::DSM_Entry(pTW_IDENTITY orig, pTW_IDENTITY dest, TW_UINT32 DG, TW_UINT16 DAT, TW_UINT16 MSG, TW_MEMREF pData) {
 		if (dsm_entry_) {
 			return dsm_entry_(orig, dest, DG, DAT, MSG, pData);
 		}
 		return TWRC_FAILURE;
 	}
 
-	void TwainFunc::UpdateMemoryEntry(pTW_IDENTITY appId){
+	void EntryPoints::UpdateMemoryEntry(pTW_IDENTITY appId){
 		if (appId){
 			if ((appId->SupportedGroups & DF_DSM2) == DF_DSM2){
 				TW_ENTRYPOINT ep{ 0 };
@@ -82,7 +82,7 @@ namespace ctwain{
 		}
 		memory_entry_ = { 0 };
 	}
-	TW_HANDLE TwainFunc::Alloc(TW_UINT32 size){
+	TW_HANDLE EntryPoints::Alloc(TW_UINT32 size){
 		if (memory_entry_.DSM_MemAllocate){
 			return memory_entry_.DSM_MemAllocate(size);
 		}
@@ -93,7 +93,7 @@ namespace ctwain{
 #endif
 	}
 
-	void TwainFunc::Free(TW_HANDLE handle){
+	void EntryPoints::Free(TW_HANDLE handle){
 		if (memory_entry_.DSM_MemFree){
 			memory_entry_.DSM_MemFree(handle);
 		}
@@ -104,7 +104,7 @@ namespace ctwain{
 #endif
 	}
 
-	TW_MEMREF TwainFunc::Lock(TW_HANDLE handle){
+	TW_MEMREF EntryPoints::Lock(TW_HANDLE handle){
 		if (memory_entry_.DSM_MemLock){
 			return memory_entry_.DSM_MemLock(handle);
 		}
@@ -115,7 +115,7 @@ namespace ctwain{
 #endif
 	}
 
-	void TwainFunc::Unlock(TW_HANDLE handle){
+	void EntryPoints::Unlock(TW_HANDLE handle){
 		if (memory_entry_.DSM_MemUnlock){
 			memory_entry_.DSM_MemUnlock(handle);
 		}

@@ -21,39 +21,31 @@
 // OR OTHER DEALINGS IN THE SOFTWARE.
 //
 
+#ifndef WINDOWS_MESSAGE_LOOP_H_
+#define WINDOWS_MESSAGE_LOOP_H_
 
-#include "stdafx.h"
-#include "message_loop.h"
-namespace ctwain{
-
-	////////////////////////////////////////////
-	// Windows message loop use
-	////////////////////////////////////////////
 #ifdef TWH_CMP_MSC
 
-	
+#include "message_loop.h"
 
-
-	WindowsMessageLoop::WindowsMessageLoop()
+namespace ctwain{	
+	/// <summary>
+	/// An implementation of MessageLoop for internal use only.
+	/// </summary>
+	class WindowsMessageLoop : public MessageLoop
 	{
-		auto hInstance = GetModuleHandle(NULL);
-		window_handle_ = RegisteredWindow::CreateMyWindow();
+	public:
+		WindowsMessageLoop();
+		WindowsMessageLoop(WindowsMessageLoop&&);                 // Move constructor
+		~WindowsMessageLoop();
+		void Send();
+		void Post();
 
-	}
-
-
-	WindowsMessageLoop::~WindowsMessageLoop()
-	{
-		RegisteredWindow::DestroyMyWindow(window_handle_);
-	}
-
-	void WindowsMessageLoop::Post(){
-
-	}
-	void WindowsMessageLoop::Send(){
-
-	}
-
+	private:
+		WindowsMessageLoop(const WindowsMessageLoop&);            // Copy constructor
+		WindowsMessageLoop& operator=(const WindowsMessageLoop&); // Copy assignment operator
+	};
 #endif
-
 }
+
+#endif // WINDOWS_MESSAGE_LOOP_H_

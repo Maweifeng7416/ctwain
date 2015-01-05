@@ -15,7 +15,8 @@ using namespace ctwain;
 HINSTANCE hInst;								// current instance
 TCHAR szTitle[MAX_LOADSTRING];					// The title bar text
 TCHAR szWindowClass[MAX_LOADSTRING];			// the main window class name
-std::shared_ptr<TwainSession> twain;
+//std::unique_ptr<TwainSession> twain;
+TwainSession twain;
 
 // Forward declarations of functions included in this code module:
 ATOM				MyRegisterClass(HINSTANCE hInstance);
@@ -37,8 +38,8 @@ int APIENTRY _tWinMain(_In_ HINSTANCE hInstance,
 	MyRegisterClass(hInstance);
 
 	// my code
-	twain = std::make_shared<TwainSession>();
-	if (twain->Initialize() && InitInstance(hInstance, nCmdShow))
+	//twain = std::make_unique<TwainSession>();
+	if (twain.Initialize() && InitInstance(hInstance, nCmdShow))
 	{
 		HACCEL hAccelTable = LoadAccelerators(hInstance, MAKEINTRESOURCE(IDC_WIN32PROJECT1));
 		MSG msg;
@@ -46,7 +47,7 @@ int APIENTRY _tWinMain(_In_ HINSTANCE hInstance,
 		// Main message loop:
 		while (GetMessage(&msg, NULL, 0, 0))
 		{
-			if (!twain->IsTwainMessage(msg)){
+			if (!twain.IsTwainMessage(msg)){
 				if (!TranslateAccelerator(msg.hwnd, hAccelTable, &msg))
 				{
 					TranslateMessage(&msg);
@@ -58,7 +59,7 @@ int APIENTRY _tWinMain(_In_ HINSTANCE hInstance,
 	}
 	else
 	{
-		if (twain->IsDsmInitialized()){
+		if (twain.IsDsmInitialized()){
 			MessageBox(nullptr, L"Could not create window.", L"Error Initializing", MB_ICONERROR);
 		}
 		else{
@@ -67,7 +68,6 @@ int APIENTRY _tWinMain(_In_ HINSTANCE hInstance,
 		return FALSE;
 	}
 }
-
 
 
 //
@@ -122,6 +122,10 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 
 	ShowWindow(hWnd, nCmdShow);
 	UpdateWindow(hWnd);
+	if (twain.GetState() == 2)
+	{
+		twain.OpenDsm(hWnd);
+	}
 
 	return TRUE;
 }
@@ -157,29 +161,25 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			DestroyWindow(hWnd);
 			break;
 		case ID_FILE_SELECTSOURCE:
-			if (twain->GetState() == 2)
+			if (twain.GetState() > 2)
 			{
-				twain->OpenDsm(hWnd);
-			}
-			if (twain->GetState() > 2)
-			{
-				auto list = twain->GetSources();
-				auto def = twain->GetDefaultSource();
+				auto list = twain.GetSources();
+				auto def = twain.GetDefaultSource();
 
-				auto src = twain->ShowSourceSelector();
+				auto src = twain.ShowSourceSelector();
 				if (src){
-					auto twRC = twain->OpenSource(*src);
+					auto twRC = twain.OpenSource(*src);
 				}
 				else{
-					auto test = twain->GetDsmStatus();
+					auto test = twain.GetDsmStatus();
 				}
 			}
 			break;
 		case ID_FILE_SOURCESETTINGS:
-			twain->EnableSourceUIOnly(true);
+			twain.EnableSourceUIOnly(true);
 			break;
 		case ID_FILE_ACQUIRE:
-			twain->EnableSource(true, false);
+			twain.EnableSource(true, false);
 			break;
 		default:
 			return DefWindowProc(hWnd, message, wParam, lParam);
@@ -191,7 +191,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		EndPaint(hWnd, &ps);
 		break;
 	case WM_DESTROY:
-		twain->ForceStepDown(2);
+		twain.ForceStepDown(2);
 		PostQuitMessage(0);
 		break;
 	default:

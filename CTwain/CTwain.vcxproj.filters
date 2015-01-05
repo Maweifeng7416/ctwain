@@ -21,9 +21,6 @@
     <ClInclude Include="twain_session.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="twain_func.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="stdafx.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -31,6 +28,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="registered_window.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="windows_message_loop.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="entry_points.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -41,13 +44,13 @@
     <ClCompile Include="stdafx.cc">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="twain_func.cc">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="message_loop.cc">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="registered_window.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="windows_message_loop.cc">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="entry_points.cc">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

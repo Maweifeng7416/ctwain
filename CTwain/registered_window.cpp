@@ -29,17 +29,26 @@ namespace ctwain{
 #ifdef TWH_CMP_MSC
 	LPCWSTR RegisteredWindow::class_name_ = L"TWAIN_INTERNAL_WINDOW";
 	HINSTANCE RegisteredWindow::instance_ = GetModuleHandle(NULL);
+	int RegisteredWindow::count_ = 0;
 
 	HWND RegisteredWindow::CreateMyWindow(){
 		Register();
-		return CreateWindowEx(WS_EX_TOOLWINDOW,
+		auto hwnd = CreateWindow(class_name_, L"Twain Window", WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, 0, CW_USEDEFAULT, 0,
+			NULL, NULL, instance_, NULL);
+		/*auto hwnd = CreateWindowEx(WS_EX_TOOLWINDOW,
 			class_name_, L"Twain Window", WS_OVERLAPPEDWINDOW,
 			CW_USEDEFAULT, 0, CW_USEDEFAULT, 0,
-			HWND_MESSAGE, NULL, instance_, NULL);
+			HWND_MESSAGE, NULL, instance_, NULL);*/
+		if (hwnd){
+			ShowWindow(hwnd, 10);
+			UpdateWindow(hwnd);
+		}
+		return hwnd;
 	}
 	void RegisteredWindow::DestroyMyWindow(HWND handle){
-
-		DestroyWindow(handle);
+		if (handle){
+			DestroyWindow(handle);
+		}
 		Unregister();
 	}
 	void RegisteredWindow::Register(){
@@ -71,12 +80,15 @@ namespace ctwain{
 	}
 	LRESULT CALLBACK RegisteredWindow::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	{
-		/*switch (message)
+		switch (message)
 		{
+		case WM_DESTROY:
+			PostQuitMessage(0);
+			break;
 		default:
 			return DefWindowProc(hWnd, message, wParam, lParam);
-		}*/
-		return DefWindowProc(hWnd, message, wParam, lParam);
+		}
+		return 0;
 	}
 #endif
 }

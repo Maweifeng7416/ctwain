@@ -81,7 +81,8 @@ namespace ctwain{
 		TwainSession();
 		TwainSession(const TwainSession&);            // Copy constructor
 		TwainSession(TwainSession&&);                 // Move constructor
-		TwainSession& operator=(const TwainSession&); // Copy assignment operator
+		TwainSession& operator=(const TwainSession&); // Copy assignment 
+		TwainSession& operator=(TwainSession&&);      // move assignment 
 		~TwainSession();
 
 		virtual void FillAppId(TW_IDENTITY& app_id);
@@ -135,7 +136,7 @@ namespace ctwain{
 		/// <see cref="CloseDsm" /> when done with a TWAIN session.
 		/// </summary>
 		/// <param name="window_handle">The window handle on Windows system to act as the parent.</param>
-		void OpenDsm(TW_MEMREF window_handle = nullptr);
+		void OpenDsm(TW_HANDLE window_handle = nullptr);
 
 		/// <summary>
 		/// Closes the data source manager.
@@ -207,15 +208,15 @@ namespace ctwain{
 			TW_UINT16    message,
 			TW_MEMREF    data);
 
-		/*
-			/// <summary>
-			/// Occurs when the source has generated an event.
-			/// </summary>
-			__event void DeviceEvent(const TW_DEVICEEVENT& deviceEvent);
-			/// <summary>
-			/// Occurs when a data transfer is ready.
-			/// </summary>
-			__event void TransferReady(TransferReadyEventArgs& readyEvent);*/
+
+		/// <summary>
+		/// Occurs when the source has generated an event.
+		/// </summary>
+		void OnDeviceEvent(const TW_DEVICEEVENT& deviceEvent);
+		/// <summary>
+		/// Occurs when a data transfer is ready.
+		/// </summary>
+		void OnTransferReady(TransferReadyEventArgs& readyEvent);
 
 	private:
 		class TwainSessionImpl* pimpl_;

@@ -21,8 +21,8 @@
 // OR OTHER DEALINGS IN THE SOFTWARE.
 //
 
-#ifndef TWAIN_FUNC_H_
-#define TWAIN_FUNC_H_
+#ifndef ENTRY_POINTS_H_
+#define ENTRY_POINTS_H_
 
 #include "twain_interop.h"
 
@@ -32,7 +32,7 @@ namespace ctwain{
 	/// Contains all the function calls required to interop with TWAIN.
 	/// This class should not be used by typical consumers.
 	/// </summary>
-	class TwainFunc
+	class EntryPoints
 	{
 	public:
 		/// <summary>
@@ -105,4 +105,4 @@ namespace ctwain{
 	};
 }
 
-#endif //TWAIN_FUNC_H_
+#endif //ENTRY_POINTS_H_

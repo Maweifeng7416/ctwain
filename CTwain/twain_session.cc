@@ -24,7 +24,8 @@
 #include "stdafx.h"
 #include <iostream>
 #include "twain_session.h"
-#include "twain_func.h"
+#include "entry_points.h"
+#include "windows_message_loop.h"
 
 namespace ctwain{
 
@@ -34,12 +35,13 @@ namespace ctwain{
 
 	class TwainSessionImpl{
 	public:
-		TW_MEMREF _hWnd = nullptr;
 		int _state = 1;
 
 		TW_USERINTERFACE _ui;
 		TW_IDENTITY _appId;
 		TW_IDENTITY _srcId;
+
+		MessageLoop* _loop; // test
 
 		~TwainSessionImpl();
 		void Init();
@@ -100,10 +102,15 @@ namespace ctwain{
 
 
 	TwainSessionImpl::~TwainSessionImpl(){
-		TwainFunc::UninitializeDSM();
+		EntryPoints::UninitializeDSM();
+
+		if (_loop){
+			delete _loop;
+			_loop = nullptr;
+		}
 	}
 	void TwainSessionImpl::Init(){
-		if (TwainFunc::InitializeDSM()){
+		if (EntryPoints::InitializeDSM()){
 			_state = 2;
 		}
 	}
@@ -136,7 +143,7 @@ namespace ctwain{
 		TW_UINT16 twRC = TWRC_FAILURE;
 		if (_state == 4)
 		{
-			_ui.hParent = _hWnd;
+			_ui.hParent = _loop->parent_handle();
 			_ui.ModalUI = modal ? TRUE : FALSE;
 			_ui.ShowUI = showUI ? TRUE : FALSE;
 			twRC = uiOnly ?
@@ -219,8 +226,8 @@ namespace ctwain{
 	TW_UINT16 TwainSessionImpl::DsmEntry(bool includeSource, TW_UINT32 DG, TW_UINT16 DAT, TW_UINT16 MSG, TW_MEMREF pData)
 	{
 		return includeSource ?
-			TwainFunc::DSM_Entry(&_appId, &_srcId, DG, DAT, MSG, pData) :
-			TwainFunc::DSM_Entry(&_appId, nullptr, DG, DAT, MSG, pData);
+			EntryPoints::DSM_Entry(&_appId, &_srcId, DG, DAT, MSG, pData) :
+			EntryPoints::DSM_Entry(&_appId, nullptr, DG, DAT, MSG, pData);
 	}
 
 	void TwainSessionImpl::ForceStepDown(int state){
@@ -254,16 +261,23 @@ namespace ctwain{
 		}
 	}
 
-	void TwainSessionImpl::OpenDsm(TW_MEMREF hWnd)
+	void TwainSessionImpl::OpenDsm(TW_HANDLE hWnd)
 	{
+		//if (hWnd){
+			_loop = new MessageLoop{ hWnd };
+		/*}
+		else{
+			_loop = new WindowsMessageLoop();
+		}*/
+		_loop->Post();
+
 		if (_state == 2)
 		{
-			_hWnd = hWnd;
-			TW_UINT16 rc = DsmEntry(false, DG_CONTROL, DAT_PARENT, MSG_OPENDSM, &_hWnd);
+			TW_UINT16 rc = DsmEntry(false, DG_CONTROL, DAT_PARENT, MSG_OPENDSM, &hWnd);
 			if (rc == TWRC_SUCCESS)
 			{
 				_state = 3;
-				TwainFunc::UpdateMemoryEntry(&_appId);
+				EntryPoints::UpdateMemoryEntry(&_appId);
 			}
 		}
 	}
@@ -271,11 +285,16 @@ namespace ctwain{
 	{
 		if (_state == 3)
 		{
-			TW_UINT16 rc = DsmEntry(false, DG_CONTROL, DAT_PARENT, MSG_CLOSEDSM, &_hWnd);
+			auto handle = _loop->parent_handle();
+			TW_UINT16 rc = DsmEntry(false, DG_CONTROL, DAT_PARENT, MSG_CLOSEDSM, &handle);
 			if (rc == TWRC_SUCCESS)
 			{
 				_state = 2;
-				TwainFunc::UpdateMemoryEntry(nullptr);
+				EntryPoints::UpdateMemoryEntry(nullptr);
+				if (_loop){
+					delete _loop;
+					_loop = nullptr;
+				}
 			}
 		}
 	}
@@ -379,30 +398,43 @@ namespace ctwain{
 	// public
 	///////////////////////////////////////////////////////
 
-	TwainSession::TwainSession() :pimpl_(new TwainSessionImpl())
+	TwainSession::TwainSession() :pimpl_{ new TwainSessionImpl() }
 	{
-		/*auto sz1 = sizeof(TwainSession);
-		auto sz2 = sizeof(TwainSessionImpl);*/
+		auto sz1 = sizeof(TwainSession);
+		auto sz2 = sizeof(TwainSessionImpl);
 	}
 	TwainSession::TwainSession(const TwainSession& other)
-		: pimpl_(new TwainSessionImpl(*other.pimpl_)) {
+		: pimpl_{ new TwainSessionImpl{ *other.pimpl_ } } {
 	}
 
 	TwainSession::TwainSession(TwainSession&& other)
-		: pimpl_(0)
+		: pimpl_{ other.pimpl_ }
 	{
-		std::swap(pimpl_, other.pimpl_);
+		other.pimpl_ = nullptr;
 	}
 
-	TwainSession& TwainSession::operator=(const TwainSession &other) {
+	TwainSession& TwainSession::operator=(const TwainSession& other) {
 		if (this != &other) {
-			*pimpl_ = *(other.pimpl_);
+			if (pimpl_ != nullptr){ delete pimpl_; }
+			pimpl_ = new TwainSessionImpl{ *other.pimpl_ };
+		}
+		return *this;
+	}
+
+	TwainSession& TwainSession::operator=(TwainSession&& other) {
+		if (this != &other) {
+			if (pimpl_ != nullptr){ delete pimpl_; }
+			pimpl_ = new TwainSessionImpl{ *other.pimpl_ };
+			other.pimpl_ = nullptr;
 		}
 		return *this;
 	}
 	TwainSession::~TwainSession()
 	{
-		delete pimpl_;
+		if (pimpl_ != nullptr){
+			delete pimpl_;
+			pimpl_ = nullptr;
+		}
 	}
 	void TwainSession::FillAppId(TW_IDENTITY& appId)
 	{

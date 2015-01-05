@@ -23,32 +23,27 @@
 
 #ifndef MESSAGE_LOOP_H_
 #define MESSAGE_LOOP_H_
-namespace ctwain{
-
-	class MessageLoop
-	{
+namespace ctwain{	
+	/// <summary>
+	/// A base interface for a message loop for TWAIN to use.
+	/// </summary>
+	class MessageLoop {
 	public:
-		MessageLoop();
-		virtual ~MessageLoop();
-		virtual void Send() = 0;
-		virtual void Post() = 0;
+		MessageLoop() :parent_handle_{ 0 }{};
+		MessageLoop(TW_HANDLE handle) :parent_handle_{ handle }{};
+		virtual ~MessageLoop(){}
+		
+		virtual void Send(){}
+		virtual void Post(){}
+
+		/// <summary>
+		/// Gets the parent handle to the message loop.
+		/// </summary>
+		TW_HANDLE parent_handle() { return parent_handle_; }
+
+	protected:
+		TW_HANDLE parent_handle_;
 	};
-
-
-#ifdef TWH_CMP_MSC
-	class WindowsMessageLoop : public MessageLoop
-	{
-	public:
-		WindowsMessageLoop();
-		~WindowsMessageLoop();
-		void Send();
-		void Post();
-		HWND window_handle(){ return window_handle_; }
-
-	private:
-		HWND window_handle_ = nullptr;
-	};
-#endif
 }
 
 #endif //MESSAGE_LOOP_H_

@@ -45,12 +45,12 @@ namespace ctwain{
 		/// <param name="handle">The handle.</param>
 		static void DestroyMyWindow(HWND handle);
 
+		static void Register();
+		static void Unregister();
 	private:
 		static HINSTANCE instance_;
 		static LPCWSTR class_name_;
 		static int count_;
-		static void Register();
-		static void Unregister();
 		static LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
 	};
 #endif

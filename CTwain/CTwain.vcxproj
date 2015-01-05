@@ -77,19 +77,20 @@
     <ClInclude Include="message_loop.h" />
     <ClInclude Include="registered_window.h" />
     <ClInclude Include="stdafx.h" />
-    <ClInclude Include="twain_func.h" />
+    <ClInclude Include="entry_points.h" />
     <ClInclude Include="twain_interop.h" />
     <ClInclude Include="twain_session.h" />
+    <ClInclude Include="windows_message_loop.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="message_loop.cc" />
     <ClCompile Include="registered_window.cpp" />
     <ClCompile Include="stdafx.cc">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="twain_func.cc" />
+    <ClCompile Include="entry_points.cc" />
     <ClCompile Include="twain_session.cc" />
+    <ClCompile Include="windows_message_loop.cc" />
   </ItemGroup>
   <ItemGroup>
     <None Include="CTwain.licenseheader" />
