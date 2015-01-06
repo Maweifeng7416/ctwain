@@ -13,9 +13,11 @@ void MyTwainSession::OnFillAppId(TW_IDENTITY& appId) {
 }
 
 void MyTwainSession::OnDeviceEvent(const TW_DEVICEEVENT& deviceEvent) {
-	cout << "Received TWAIN device event " << deviceEvent.Event << endl;
+	ostringstream msg;
+	msg << "Received TWAIN device event " << deviceEvent.Event << endl;
 }
 
 void MyTwainSession::OnTransferReady(TransferReadyEventArgs& readyEvent) {
-	cout << "Received TWAIN transfer ready event " << endl;
+	ostringstream msg;
+	msg << "Received TWAIN transfer ready event " << endl;
 }
