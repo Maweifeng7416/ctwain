@@ -20,40 +20,36 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE 
 // OR OTHER DEALINGS IN THE SOFTWARE.
 //
-
-
 #include "stdafx.h"
+#include <memory>
+#include <thread>
 #include "message_loop.h"
+#include "registered_window.h"
+
 namespace ctwain{
 
-	////////////////////////////////////////////
-	// Windows message loop use
-	////////////////////////////////////////////
-#ifdef TWH_CMP_MSC
-
-	
-
-
-	WindowsMessageLoop::WindowsMessageLoop()
+	MessageLoop::MessageLoop() :parent_handle_{ RegisteredWindow::CreateMyWindow() }, owns_{ true }
 	{
-		auto hInstance = GetModuleHandle(NULL);
-		window_handle_ = RegisteredWindow::CreateMyWindow();
-
+		if (parent_handle_){
+			ShowWindow(parent_handle_, 10);
+			UpdateWindow(parent_handle_);
+			// todo: run message loop in another thread
+		}
 	}
 
-
-	WindowsMessageLoop::~WindowsMessageLoop()
+	MessageLoop::~MessageLoop()
 	{
-		RegisteredWindow::DestroyMyWindow(window_handle_);
+		if (owns_ && parent_handle_ != nullptr){
+			RegisteredWindow::DestroyMyWindow(parent_handle_);
+		}
+		parent_handle_ = nullptr;
 	}
 
-	void WindowsMessageLoop::Post(){
+	void MessageLoop::Post(){
+		auto test = 10;
 
 	}
-	void WindowsMessageLoop::Send(){
+	void MessageLoop::Send(){
 
 	}
-
-#endif
-
 }

@@ -27,7 +27,7 @@
 namespace ctwain{
 #ifdef TWH_CMP_MSC
 	/// <summary>
-	/// Wraps windows registration and creation code
+	/// Wraps global windows registration and creation code
 	/// and keeps track of call counts to only unregister at 0.
 	/// This should not be used by consumers.
 	/// </summary>

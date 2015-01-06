@@ -3,7 +3,7 @@
 
 #include "stdafx.h"
 #include "Win32Project1.h"
-#include "twain_session.h"
+#include "MyTwainSession.h"
 #include <memory>
 #include <iostream>
 
@@ -15,8 +15,7 @@ using namespace ctwain;
 HINSTANCE hInst;								// current instance
 TCHAR szTitle[MAX_LOADSTRING];					// The title bar text
 TCHAR szWindowClass[MAX_LOADSTRING];			// the main window class name
-//std::unique_ptr<TwainSession> twain;
-TwainSession twain;
+MyTwainSession twain;
 
 // Forward declarations of functions included in this code module:
 ATOM				MyRegisterClass(HINSTANCE hInstance);
@@ -38,7 +37,6 @@ int APIENTRY _tWinMain(_In_ HINSTANCE hInstance,
 	MyRegisterClass(hInstance);
 
 	// my code
-	//twain = std::make_unique<TwainSession>();
 	if (twain.Initialize() && InitInstance(hInstance, nCmdShow))
 	{
 		HACCEL hAccelTable = LoadAccelerators(hInstance, MAKEINTRESOURCE(IDC_WIN32PROJECT1));
@@ -111,7 +109,7 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 	HWND hWnd;
 
 	hInst = hInstance; // Store instance handle in our global variable
-	
+
 	hWnd = CreateWindow(szWindowClass, szTitle, WS_OVERLAPPEDWINDOW,
 		CW_USEDEFAULT, 0, CW_USEDEFAULT, 0, NULL, NULL, hInstance, NULL);
 
@@ -122,7 +120,7 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 
 	ShowWindow(hWnd, nCmdShow);
 	UpdateWindow(hWnd);
-	if (twain.GetState() == 2)
+	if (twain.state() == 2)
 	{
 		twain.OpenDsm(hWnd);
 	}
@@ -161,7 +159,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			DestroyWindow(hWnd);
 			break;
 		case ID_FILE_SELECTSOURCE:
-			if (twain.GetState() > 2)
+			if (twain.state() > 2)
 			{
 				auto list = twain.GetSources();
 				auto def = twain.GetDefaultSource();
@@ -176,10 +174,10 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			}
 			break;
 		case ID_FILE_SOURCESETTINGS:
-			twain.EnableSourceUIOnly(true);
+			twain.EnableSource(EnableSourceMode::kShowUIOnly, true);
 			break;
 		case ID_FILE_ACQUIRE:
-			twain.EnableSource(true, false);
+			twain.EnableSource(EnableSourceMode::kShowUI, false);
 			break;
 		default:
 			return DefWindowProc(hWnd, message, wParam, lParam);

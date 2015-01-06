@@ -80,7 +80,6 @@
     <ClInclude Include="entry_points.h" />
     <ClInclude Include="twain_interop.h" />
     <ClInclude Include="twain_session.h" />
-    <ClInclude Include="windows_message_loop.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="registered_window.cpp" />
@@ -90,7 +89,7 @@
     </ClCompile>
     <ClCompile Include="entry_points.cc" />
     <ClCompile Include="twain_session.cc" />
-    <ClCompile Include="windows_message_loop.cc" />
+    <ClCompile Include="message_loop.cc" />
   </ItemGroup>
   <ItemGroup>
     <None Include="CTwain.licenseheader" />

@@ -23,26 +23,59 @@
 
 #ifndef MESSAGE_LOOP_H_
 #define MESSAGE_LOOP_H_
-namespace ctwain{	
+
+namespace ctwain{
 	/// <summary>
 	/// A base interface for a message loop for TWAIN to use.
 	/// </summary>
 	class MessageLoop {
 	public:
-		MessageLoop() :parent_handle_{ 0 }{};
-		MessageLoop(TW_HANDLE handle) :parent_handle_{ handle }{};
-		virtual ~MessageLoop(){}
-		
-		virtual void Send(){}
-		virtual void Post(){}
+		/// <summary>
+		/// Initializes a new instance of the <see cref="MessageLoop"/> class
+		/// with an internal message loop.
+		/// </summary>
+		MessageLoop(); 
+
+		/// <summary>
+		/// Initializes a new instance of the <see cref="MessageLoop"/> class
+		/// using an existing window handle.
+		/// </summary>
+		/// <param name="handle">The handle.</param>
+		MessageLoop(HWND handle) :parent_handle_{ handle }, owns_{ false }{};
+
+		// no copy ctor
+		MessageLoop(const MessageLoop&) = delete;
+		// no copy assign
+		MessageLoop& operator=(const MessageLoop&) = delete;
+
+		// move ctor
+		MessageLoop(MessageLoop&& other) :parent_handle_{ other.parent_handle_ }, owns_{ other.owns_ }{
+			other.parent_handle_ = nullptr;
+		}
+		// move assign
+		MessageLoop& operator=(MessageLoop&& other){
+			if (this != &other)
+			{
+				parent_handle_ = other.parent_handle_;
+				owns_ = other.owns_;
+				other.parent_handle_ = nullptr;
+			}
+			return *this;
+		}
+
+		~MessageLoop();
+
+		void Send();
+		void Post();
 
 		/// <summary>
 		/// Gets the parent handle to the message loop.
 		/// </summary>
-		TW_HANDLE parent_handle() { return parent_handle_; }
+		HWND parent_handle() { return parent_handle_; }
 
 	protected:
-		TW_HANDLE parent_handle_;
+		HWND parent_handle_;
+		bool owns_;
 	};
 }
 

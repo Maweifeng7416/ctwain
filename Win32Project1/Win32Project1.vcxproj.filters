@@ -30,12 +30,18 @@
     <ClInclude Include="Win32Project1.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="MyTwainSession.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cc">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Win32Project1.cc">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="MyTwainSession.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

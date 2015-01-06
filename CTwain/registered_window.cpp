@@ -39,10 +39,6 @@ namespace ctwain{
 			class_name_, L"Twain Window", WS_OVERLAPPEDWINDOW,
 			CW_USEDEFAULT, 0, CW_USEDEFAULT, 0,
 			HWND_MESSAGE, NULL, instance_, NULL);*/
-		if (hwnd){
-			ShowWindow(hwnd, 10);
-			UpdateWindow(hwnd);
-		}
 		return hwnd;
 	}
 	void RegisteredWindow::DestroyMyWindow(HWND handle){
