@@ -10,6 +10,15 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Win32Project1", "Win32Proje
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "CTwain", "CTwain\CTwain.vcxproj", "{F2DCB328-AAA7-4C6A-BB6B-73CE48D9D626}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ConsoleApplication1", "ConsoleApplication1\ConsoleApplication1.vcxproj", "{9ABBDB18-7213-410C-B6B3-6AC64974C52A}"
+	ProjectSection(ProjectDependencies) = postProject
+		{F2DCB328-AAA7-4C6A-BB6B-73CE48D9D626} = {F2DCB328-AAA7-4C6A-BB6B-73CE48D9D626}
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "lib", "lib", "{EC14CB52-F634-4C06-ABC4-ECE145EFBD31}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "samples", "samples", "{4B614B22-A1DB-4C4D-B2BD-87A60EAF4CA1}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -24,8 +33,17 @@ Global
 		{F2DCB328-AAA7-4C6A-BB6B-73CE48D9D626}.Debug|Win32.Build.0 = Debug|Win32
 		{F2DCB328-AAA7-4C6A-BB6B-73CE48D9D626}.Release|Win32.ActiveCfg = Release|Win32
 		{F2DCB328-AAA7-4C6A-BB6B-73CE48D9D626}.Release|Win32.Build.0 = Release|Win32
+		{9ABBDB18-7213-410C-B6B3-6AC64974C52A}.Debug|Win32.ActiveCfg = Debug|Win32
+		{9ABBDB18-7213-410C-B6B3-6AC64974C52A}.Debug|Win32.Build.0 = Debug|Win32
+		{9ABBDB18-7213-410C-B6B3-6AC64974C52A}.Release|Win32.ActiveCfg = Release|Win32
+		{9ABBDB18-7213-410C-B6B3-6AC64974C52A}.Release|Win32.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{91791386-D581-44A5-8AD6-E5ED4E20D3A2} = {4B614B22-A1DB-4C4D-B2BD-87A60EAF4CA1}
+		{F2DCB328-AAA7-4C6A-BB6B-73CE48D9D626} = {EC14CB52-F634-4C06-ABC4-ECE145EFBD31}
+		{9ABBDB18-7213-410C-B6B3-6AC64974C52A} = {4B614B22-A1DB-4C4D-B2BD-87A60EAF4CA1}
 	EndGlobalSection
 EndGlobal
