@@ -24,9 +24,6 @@
 #ifndef MESSAGE_LOOP_H_
 #define MESSAGE_LOOP_H_
 
-#include <mutex>
-#include <condition_variable>
-
 namespace ctwain{
 
 	class TwainSession;
@@ -40,14 +37,14 @@ namespace ctwain{
 		/// Initializes a new instance of the <see cref="MessageLoop"/> class
 		/// with an internal message loop.
 		/// </summary>
-		MessageLoop(TwainSession*); 
+		MessageLoop(TwainSession*);
 
 		/// <summary>
 		/// Initializes a new instance of the <see cref="MessageLoop"/> class
 		/// using an existing window handle.
 		/// </summary>
 		/// <param name="handle">The handle.</param>
-		MessageLoop(HWND handle) :parent_handle_{ handle }, owns_{ false }{};
+		MessageLoop(HWND handle) :parent_handle_{ handle }{};
 
 		// no copy ctor
 		MessageLoop(const MessageLoop&) = delete;
@@ -80,13 +77,17 @@ namespace ctwain{
 		HWND parent_handle() { return parent_handle_; }
 
 	protected:
-		HWND parent_handle_;
-		bool owns_;
+		HWND parent_handle_ = nullptr;
+		bool owns_ = false;
 
-		TwainSession* twain;
-		bool ready;
-		std::condition_variable waiter;
-		std::mutex m;
+		TwainSession* twain_;
+
+		static void RegisterWindowClass();
+		static void UnregisterWindowClass();
+		static HINSTANCE instance_;
+		static ATOM class_atom_;
+		static int window_count_;
+		static LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
 	};
 }
 

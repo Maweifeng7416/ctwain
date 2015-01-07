@@ -23,6 +23,7 @@
 
 #include "stdafx.h"
 #include <iostream>
+#include "build_macros.h"
 #include "twain_session.h"
 #include "entry_points.h"
 #include "message_loop.h"

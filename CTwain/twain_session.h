@@ -26,7 +26,7 @@
 
 #include <memory>
 #include <vector>
-#include "twain_interop.h"
+#include "twain2.3.h"
 
 namespace ctwain{
 

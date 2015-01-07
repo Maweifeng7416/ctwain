@@ -21,28 +21,94 @@
 // OR OTHER DEALINGS IN THE SOFTWARE.
 //
 #include "stdafx.h"
-#include <memory>
 #include <thread>
 #include <mutex>
 #include <iostream>
 #include <condition_variable>
 #include "message_loop.h"
-#include "registered_window.h"
 #include "twain_session.h"
 
 using namespace std;
 
 namespace ctwain{
 
-	MessageLoop::MessageLoop(TwainSession* ptwain) : owns_{ true }, twain{ ptwain }, ready{ false }
-	{
+	////////////////////////////////////////////////////
+	// static window registration
+	////////////////////////////////////////////////////
 
-		cout << "in loop ctor" << endl;
-		thread t{ [this](){
-			cout << "in loop thread" << endl;
-			unique_lock<mutex> lk(m);
-			ready = true;
-			parent_handle_ = RegisteredWindow::CreateMyWindow();
+	ATOM MessageLoop::class_atom_ = 0;
+	HINSTANCE MessageLoop::instance_ = GetModuleHandle(NULL);
+	int MessageLoop::window_count_ = 0;
+	void MessageLoop::RegisterWindowClass(){
+		if (window_count_ == 0){
+			WNDCLASSEX wcex;
+
+			wcex.cbSize = sizeof(WNDCLASSEX);
+
+			wcex.style = CS_HREDRAW | CS_VREDRAW;
+			wcex.lpfnWndProc = WndProc;
+			wcex.cbClsExtra = 0;
+			wcex.cbWndExtra = 0;
+			wcex.hInstance = instance_;
+			wcex.hIcon = NULL;
+			wcex.hCursor = LoadCursor(NULL, IDC_ARROW);
+			wcex.hbrBackground = (HBRUSH) (COLOR_WINDOW + 1);
+			wcex.lpszMenuName = NULL;
+			wcex.lpszClassName = L"TWAIN_INTERNAL_WINDOW";
+			wcex.hIconSm = NULL;
+
+			RegisterClassEx(&wcex);
+		}
+		window_count_++;
+	}
+	void MessageLoop::UnregisterWindowClass(){
+		if (--window_count_ == 0){
+			UnregisterClass(MAKEINTATOM(class_atom_), instance_);
+		}
+	}
+	LRESULT CALLBACK MessageLoop::WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
+	{
+		switch (message)
+		{
+		case WM_PAINT:
+		{
+			PAINTSTRUCT ps;
+			HDC hdc;
+			hdc = BeginPaint(hWnd, &ps);
+			// TODO: Add any drawing code here...
+			EndPaint(hWnd, &ps);
+			break;
+		}
+		case WM_DESTROY:
+			PostQuitMessage(0);
+			break;
+		default:
+			return DefWindowProc(hWnd, message, wParam, lParam);
+		}
+		return 0;
+	}
+
+	////////////////////////////////////////////////////
+	// message loop code
+	////////////////////////////////////////////////////
+	MessageLoop::MessageLoop(TwainSession* ptwain) : owns_{ true }, twain_{ ptwain }
+	{
+		condition_variable loopWaiter;
+		mutex loopMtx;
+		bool threadStarted = false; // don't know enough about condition_variable to know why needs this to work
+
+		thread t{ [this, &loopWaiter, &loopMtx, &threadStarted](){
+			unique_lock<mutex> lk(loopMtx);
+			threadStarted = true;
+
+			RegisterWindowClass(); // yes ain't thread-safe but any one calling this simultaneously in multiple threads can only blame themselves.
+			parent_handle_ = CreateWindow(MAKEINTATOM(class_atom_), L"Twain Window", WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, 0, CW_USEDEFAULT, 0,
+				NULL, NULL, instance_, NULL);
+			/*parent_handle_ = CreateWindowEx(WS_EX_TOOLWINDOW,
+			class_name_, L"Twain Window", WS_OVERLAPPEDWINDOW,
+			CW_USEDEFAULT, 0, CW_USEDEFAULT, 0,
+			HWND_MESSAGE, NULL, instance_, NULL);*/
+
 			if (parent_handle_){
 				ShowWindow(parent_handle_, 10);
 				UpdateWindow(parent_handle_);
@@ -51,48 +117,40 @@ namespace ctwain{
 
 				// Main message loop:
 				if (PeekMessage(&msg, NULL, 0, 0, PM_NOREMOVE)){
-					cout << "peek ok, notifying" << endl;
-					waiter.notify_all();
+					loopWaiter.notify_all();
 					lk.unlock();
 					lk.release();
 					while (GetMessage(&msg, NULL, 0, 0))
 					{
 						cout << "got msg " << msg.message << endl;
-						if (!twain->IsTwainMessage(msg)){
+						if (twain_ == nullptr || !twain_->IsTwainMessage(msg)){
 							TranslateMessage(&msg);
 							DispatchMessage(&msg);
 						}
 					}
-				}
-				else{
-					cout << "peek failed" << endl;
-					waiter.notify_all();
-					lk.unlock();
-					lk.release();
+					return;
 				}
 			}
-			else{
-				cout << "create handle failed" << endl;
-				waiter.notify_all();
-				lk.unlock();
-				lk.release();
-			}
+
+			loopWaiter.notify_all();
+			lk.unlock();
+			lk.release();
 		} };
-		unique_lock<mutex> lk(m);
-		while (!ready){
-			cout << "waiting for condition" << endl;
-			waiter.wait(lk);
+		unique_lock<mutex> lk(loopMtx);
+		while (!threadStarted){
+			loopWaiter.wait(lk);
 		}
-		cout << "exiting loop ctor" << endl;
 		t.detach();
 	}
 
 	MessageLoop::~MessageLoop()
 	{
 		if (owns_ && parent_handle_ != nullptr){
-			RegisteredWindow::DestroyMyWindow(parent_handle_);
+			DestroyWindow(parent_handle_);
+			UnregisterWindowClass();
 		}
 		parent_handle_ = nullptr;
+		twain_ = nullptr;
 	}
 
 	void MessageLoop::Post(){

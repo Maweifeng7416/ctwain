@@ -24,7 +24,6 @@
 #ifndef ENTRY_POINTS_H_
 #define ENTRY_POINTS_H_
 
-#include "twain_interop.h"
 
 namespace ctwain{
 

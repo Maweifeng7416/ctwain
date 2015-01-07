@@ -23,6 +23,7 @@
 
 #include "stdafx.h"
 #include "entry_points.h"
+#include "build_macros.h"
 
 namespace ctwain{
 

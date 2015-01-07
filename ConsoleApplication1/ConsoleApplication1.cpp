@@ -29,13 +29,13 @@ int _tmain(int argc, _TCHAR* argv [])
 			if (hit){
 				if (twain.OpenSource(*hit) == TWRC_SUCCESS){
 					cout << "Opened sample source" << endl;
-					if (twain.EnableSource(EnableSourceMode::kShowUI, true) == TWRC_SUCCESS){
+					/*if (twain.EnableSource(EnableSourceMode::kShowUI, false) == TWRC_SUCCESS){
 						cout << "Enabled sample source" << endl;
 
 					}
 					else{
 						cout << "Failed to enable sample source" << endl;
-					}
+					}*/
 				}
 				else{
 					cout << "Failed to open sample source" << endl;

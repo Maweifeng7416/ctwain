@@ -21,31 +21,36 @@
 // OR OTHER DEALINGS IN THE SOFTWARE.
 //
 
-#ifndef WINDOWS_MESSAGE_LOOP_H_
-#define WINDOWS_MESSAGE_LOOP_H_
+#ifndef BUILD_MACROS_H_
+#define BUILD_MACROS_H_
+
+
+#include "twain2.3.h"
 
 #ifdef TWH_CMP_MSC
+#define LOADLIBRARY(lib) LoadLibrary(lib) 
+#define LOADFUNCTION(lib, func) GetProcAddress(lib, func)
+#define UNLOADLIBRARY(lib) FreeLibrary(lib)
 
-#include "message_loop.h"
+#elif  TWH_CMP_GNU
+#define LOADLIBRARY(lib) dlopen(lib, RTLD_NOW)
+#define LOADFUNCTION(lib, func) dlsym(lib, func)
+#define UNLOADLIBRARY(lib) dlclose(lib)
+typedef void * HMODULE;
 
-namespace ctwain{	
-	/// <summary>
-	/// An implementation of MessageLoop for internal use only.
-	/// </summary>
-	class WindowsMessageLoop : public MessageLoop
-	{
-	public:
-		WindowsMessageLoop();
-		WindowsMessageLoop(WindowsMessageLoop&&);                 // Move constructor
-		~WindowsMessageLoop();
-		void Send();
-		void Post();
-
-	private:
-		WindowsMessageLoop(const WindowsMessageLoop&);            // Copy constructor
-		WindowsMessageLoop& operator=(const WindowsMessageLoop&); // Copy assignment operator
-	};
+#if !defined(TRUE)
+#define FALSE		0
+#define TRUE		1
 #endif
-}
 
-#endif // WINDOWS_MESSAGE_LOOP_H_
+#else
+#error Sorry, we don't recognize this system...
+#endif
+
+
+#ifndef _WINUSER_
+struct tagMSG; // Forward or never
+typedef tagMSG MSG;
+#endif
+
+#endif //BUILD_MACROS_H_
