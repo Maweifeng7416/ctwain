@@ -11,34 +11,34 @@
 using namespace std;
 using namespace ctwain;
 
-bool FindSampleSource(const unique_ptr<TW_IDENTITY>& test){
-	auto res = strstr(test->ProductName, "TWAIN2 FreeImage Software Scanner");
-	return res != nullptr;
-}
 
 int _tmain(int argc, _TCHAR* argv [])
 {
 	MyTwainSession twain;
 	if (twain.Initialize()){
+		cout << "DSM initialized" << endl;
 		twain.OpenDsm();
 		if (twain.IsDsmOpen()){
+			cout << "DSM opened" << endl;
 			auto sources = twain.GetSources();
 			auto results = find_if(begin(sources), end(sources),
-				//[&](std::shared_ptr<TW_IDENTITY> const& object) { return object->ProductName == "TWAIN2 FreeImage Software Scanner"; });
-				FindSampleSource);
+				[](const std::unique_ptr<TW_IDENTITY>& test) { return strstr(test->ProductName, "TWAIN2 FreeImage Software Scanner") != nullptr; });
+
 			auto hit = results != end(sources) ? results->get() : nullptr;
 
 			if (hit){
 				if (twain.OpenSource(*hit) == TWRC_SUCCESS){
+					cout << "Opened sample source" << endl;
 					if (twain.EnableSource(EnableSourceMode::kShowUI, true) == TWRC_SUCCESS){
+						cout << "Enabled sample source" << endl;
 
 					}
 					else{
-						cout << "failed to enable source" << endl;
+						cout << "Failed to enable sample source" << endl;
 					}
 				}
 				else{
-					cout << "failed to open source" << endl;
+					cout << "Failed to open sample source" << endl;
 				}
 			}
 			else{
@@ -46,11 +46,11 @@ int _tmain(int argc, _TCHAR* argv [])
 			}
 		}
 		else{
-			cout << "failed to open dsm" << endl;
+			cout << "Failed to open DSM" << endl;
 		}
 	}
 	else{
-		cout << "failed to initialize" << endl;
+		cout << "Failed to initialize DSM" << endl;
 	}
 
 	int dummy;

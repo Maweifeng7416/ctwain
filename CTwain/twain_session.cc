@@ -127,7 +127,7 @@ namespace ctwain{
 			loop_ = new MessageLoop{ hWnd };
 		}
 		else{
-			loop_ = new MessageLoop();
+			loop_ = new MessageLoop(this);
 		}
 		loop_->Post();
 
@@ -280,6 +280,7 @@ namespace ctwain{
 			TW_UINT16 twRC = DsmEntry(true, DG_CONTROL, DAT_EVENT, MSG_PROCESSEVENT, &evt);
 			if (twRC == TWRC_DSEVENT)
 			{
+				std::cout << "Received TWAIN message " << evt.TWMessage << " from loop" << std::endl;
 				HandleDsmMessage(evt.TWMessage);
 				return true;
 			}
@@ -330,6 +331,7 @@ namespace ctwain{
 		if (twRC == TWRC_SUCCESS)
 		{
 			state_ = 4;
+			OnSourceDisabled();
 		}
 
 	}

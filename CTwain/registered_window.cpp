@@ -78,6 +78,15 @@ namespace ctwain{
 	{
 		switch (message)
 		{
+		case WM_PAINT:
+		{
+			PAINTSTRUCT ps;
+			HDC hdc;
+			hdc = BeginPaint(hWnd, &ps);
+			// TODO: Add any drawing code here...
+			EndPaint(hWnd, &ps);
+			break; 
+		}
 		case WM_DESTROY:
 			PostQuitMessage(0);
 			break;

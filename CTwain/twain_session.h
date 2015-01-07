@@ -31,6 +31,24 @@
 namespace ctwain{
 
 	/// <summary>
+	/// Indicates the mode to enable the TWAIN source with.
+	/// </summary>
+	enum class EnableSourceMode{
+		/// <summary>
+		/// Show driver UI during data transfer.
+		/// </summary>
+		kShowUI,
+		/// <summary>
+		/// Show driver UI without transferring data.
+		/// </summary>
+		kShowUIOnly,
+		/// <summary>
+		/// Hide driver UI during data transfer.
+		/// </summary>
+		kHideUI
+	};
+
+	/// <summary>
 	/// Contains event data when a data transfer is ready to be processed.
 	/// </summary>
 	struct TransferReadyEventArgs
@@ -70,21 +88,13 @@ namespace ctwain{
 	};
 
 	/// <summary>
-	/// Indicates the mode to enable the TWAIN source with.
+	/// Contains event data on the current data transfer.
 	/// </summary>
-	enum class EnableSourceMode{
+	struct TransferredDataEventArgs{		
 		/// <summary>
-		/// Show driver UI during data transfer.
+		/// The data from native transfer.
 		/// </summary>
-		kShowUI,
-		/// <summary>
-		/// Show driver UI without transferring data.
-		/// </summary>
-		kShowUIOnly,
-		/// <summary>
-		/// Hide driver UI during data transfer.
-		/// </summary>
-		kHideUI
+		TW_HANDLE NativeData;
 	};
 
 	/// <summary>
@@ -239,6 +249,17 @@ namespace ctwain{
 		/// </summary>
 		/// <param name="readyEvent">The event object for controlling the upcoming transfer.</param>
 		virtual void OnTransferReady(TransferReadyEventArgs& readyEvent){}
+
+		/// <summary>
+		/// Called when data has been transferred from the source.
+		/// </summary>
+		/// <param name="transferEvent">The transfer event.</param>
+		virtual void OnTransferredData(const TransferredDataEventArgs& transferEvent){}
+
+		/// <summary>
+		/// Called when the source has been disabled.
+		/// </summary>
+		virtual void OnSourceDisabled(){}
 
 	private:
 		int state_;
