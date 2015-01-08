@@ -158,6 +158,12 @@ namespace ctwain{
 		TwainSession& operator=(TwainSession&&) = delete;      // move assignment 
 
 		/// <summary>
+		/// Gets the numeric id of current data source.
+		/// </summary>
+		/// <returns></returns>
+		TW_UINT32 source_id();
+
+		/// <summary>
 		/// Gets the current logical state as defined by the TWAIN spec.
 		/// </summary>
 		/// <returns></returns>
@@ -263,19 +269,19 @@ namespace ctwain{
 		/// Called when the source has generated an event.
 		/// </summary>
 		/// <param name="deviceEvent">The TWAIN device event object.</param>
-		virtual void OnDeviceEvent(const TW_DEVICEEVENT& deviceEvent){}
+		virtual void OnDeviceEvent(const TW_DEVICEEVENT& deviceEvent){ UNREFERENCED_PARAMETER(deviceEvent); }
 
 		/// <summary>
 		/// Called when a data transfer is ready.
 		/// </summary>
 		/// <param name="readyEvent">The event object for controlling the upcoming transfer.</param>
-		virtual void OnTransferReady(TransferReadyEventArgs& readyEvent){}
+		virtual void OnTransferReady(TransferReadyEventArgs& readyEvent){ UNREFERENCED_PARAMETER(readyEvent); }
 
 		/// <summary>
 		/// Called when data has been transferred from the source.
 		/// </summary>
 		/// <param name="transferEvent">The transfer event.</param>
-		virtual void OnTransferredData(const TransferredDataEventArgs& transferEvent){}
+		virtual void OnTransferredData(const TransferredDataEventArgs& transferEvent){ UNREFERENCED_PARAMETER(transferEvent); }
 
 		/// <summary>
 		/// Called when the source has been disabled.

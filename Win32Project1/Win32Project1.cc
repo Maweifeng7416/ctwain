@@ -6,6 +6,7 @@
 #include "MyTwainSession.h"
 #include <memory>
 #include <iostream>
+#include "FreeImage.h"
 
 #define MAX_LOADSTRING 100
 
@@ -37,6 +38,9 @@ int APIENTRY _tWinMain(_In_ HINSTANCE hInstance,
 	MyRegisterClass(hInstance);
 
 	// my code
+
+	FreeImage_Initialise();
+	int retVal = 0;
 	if (twain.Initialize() && InitInstance(hInstance, nCmdShow))
 	{
 		HACCEL hAccelTable = LoadAccelerators(hInstance, MAKEINTRESOURCE(IDC_WIN32PROJECT1));
@@ -53,7 +57,7 @@ int APIENTRY _tWinMain(_In_ HINSTANCE hInstance,
 				}
 			}
 		}
-		return (int) msg.wParam;
+		retVal = (int) msg.wParam;
 	}
 	else
 	{
@@ -63,8 +67,9 @@ int APIENTRY _tWinMain(_In_ HINSTANCE hInstance,
 		else{
 			MessageBox(nullptr, L"Could not load TWAIN dsm.", L"Error Initializing", MB_ICONERROR);
 		}
-		return FALSE;
 	}
+	FreeImage_DeInitialise();
+	return retVal;
 }
 
 

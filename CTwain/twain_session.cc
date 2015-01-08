@@ -38,6 +38,7 @@ namespace ctwain{
 
 
 	// temp hack to use static func for callback with current session instance
+	// this doesn't work yet.
 	struct CallbackHack{
 
 		static TwainSession* Instance;
@@ -47,14 +48,13 @@ namespace ctwain{
 #else
 			FAR PASCAL TW_UINT16
 #endif
-			DsmCallback(pTW_IDENTITY orig, pTW_IDENTITY dest, TW_UINT32 dg, TW_UINT16 dat, TW_UINT16 msg, TW_MEMREF data){
-			//if (Instance){
-			//	auto inst = *Instance;
-			//	if (orig && orig->Id == inst.ds_id_){
-			//		//inst.HandleDsmMessage(msg);
-			//		return TWRC_SUCCESS;
-			//	}
-			//}
+			DsmCallback(pTW_IDENTITY orig, pTW_IDENTITY, TW_UINT32, TW_UINT16, TW_UINT16 /*msg*/, TW_MEMREF){
+			if (Instance){
+				if (orig && orig->Id == Instance->source_id()){
+					//Instance->HandleDsmMessage(msg);
+					return TWRC_SUCCESS;
+				}
+			}
 			return TWRC_FAILURE;
 		}
 
@@ -80,6 +80,9 @@ namespace ctwain{
 		}
 	}
 
+	TW_UINT32 TwainSession::source_id(){
+		return ds_id_.Id;
+	}
 
 	bool TwainSession::Initialize(){
 		if (state_ < State::kDsmLoaded && EntryPoints::InitializeDSM()){
@@ -169,7 +172,7 @@ namespace ctwain{
 
 	TW_STATUS TwainSession::GetDsmStatus()
 	{
-		TW_STATUS status;
+		TW_STATUS status{ 0 };
 		if (state_ >= State::kDsmLoaded)
 		{
 			DsmEntry(false, DG_CONTROL, DAT_STATUS, MSG_GET, &status);
@@ -178,7 +181,7 @@ namespace ctwain{
 	}
 	TW_STATUS TwainSession::GetSourceStatus()
 	{
-		TW_STATUS status;
+		TW_STATUS status{ 0 };
 		if (state_ >= State::kSourceOpened)
 		{
 			DsmEntry(true, DG_CONTROL, DAT_STATUS, MSG_GET, &status);
@@ -191,7 +194,7 @@ namespace ctwain{
 		TW_IDENTITY src{ 0 };
 		if (state_ >= State::kDsmOpened)
 		{
-			auto twRC = DsmEntry(false, DG_CONTROL, DAT_IDENTITY, MSG_USERSELECT, &src);
+			DsmEntry(false, DG_CONTROL, DAT_IDENTITY, MSG_USERSELECT, &src);
 		}
 		return src;
 	}
@@ -200,7 +203,7 @@ namespace ctwain{
 		TW_IDENTITY src{ 0 };
 		if (state_ >= State::kDsmOpened)
 		{
-			auto twRC = DsmEntry(false, DG_CONTROL, DAT_IDENTITY, MSG_GETDEFAULT, &src);
+			DsmEntry(false, DG_CONTROL, DAT_IDENTITY, MSG_GETDEFAULT, &src);
 		}
 		return src;
 	}
@@ -339,24 +342,24 @@ namespace ctwain{
 
 		return;//doesn't work yet
 
-		auto funcPtr = CallbackHack::DsmCallback;
-		TW_UINT16 twRC = TWRC_FAILURE;
-		if (app_id_.ProtocolMajor > 2 || (app_id_.ProtocolMajor >= 2 && app_id_.ProtocolMinor >= 3)){
-			// callback2
-			TW_CALLBACK2 callback{ funcPtr, 0, 0 };
-			twRC = DsmEntry(true, DG_CONTROL, DAT_CALLBACK2, MSG_REGISTER_CALLBACK, &callback);
-		}
-		else{
-			// old callback
-			TW_CALLBACK callback{ funcPtr, 0, 0 };
-			twRC = DsmEntry(true, DG_CONTROL, DAT_CALLBACK, MSG_REGISTER_CALLBACK, &callback);
-		}
-		if (twRC == TWRC_SUCCESS){
-			CallbackHack::Instance = this;
-		}
-		else{
-			CallbackHack::Instance = nullptr;
-		}
+		//auto funcPtr = CallbackHack::DsmCallback;
+		//TW_UINT16 twRC = TWRC_FAILURE;
+		//if (app_id_.ProtocolMajor > 2 || (app_id_.ProtocolMajor >= 2 && app_id_.ProtocolMinor >= 3)){
+		//	// callback2
+		//	TW_CALLBACK2 callback{ funcPtr, 0, 0 };
+		//	twRC = DsmEntry(true, DG_CONTROL, DAT_CALLBACK2, MSG_REGISTER_CALLBACK, &callback);
+		//}
+		//else{
+		//	// old callback
+		//	TW_CALLBACK callback{ funcPtr, 0, 0 };
+		//	twRC = DsmEntry(true, DG_CONTROL, DAT_CALLBACK, MSG_REGISTER_CALLBACK, &callback);
+		//}
+		//if (twRC == TWRC_SUCCESS){
+		//	CallbackHack::Instance = this;
+		//}
+		//else{
+		//	CallbackHack::Instance = nullptr;
+		//}
 	}
 	void TwainSession::HandleTransferReady()
 	{
@@ -446,12 +449,12 @@ namespace ctwain{
 
 	void TwainSession::TransferNative(bool image){
 		TW_MEMREF pData = nullptr;
-		
+
 		auto rc = image ?
 			DsmEntry(true, DG_IMAGE, DAT_IMAGENATIVEXFER, MSG_GET, &pData) :
 			DsmEntry(true, DG_AUDIO, DAT_AUDIONATIVEXFER, MSG_GET, &pData);
-		
-		
+
+
 		if (rc == TWRC_XFERDONE){
 			state_ = State::kTransferring;
 
@@ -475,7 +478,7 @@ namespace ctwain{
 			}
 		}
 		else{
-			auto status = GetSourceStatus();
+			//auto status = GetSourceStatus();
 		}
 	}
 

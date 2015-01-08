@@ -154,7 +154,7 @@ namespace ctwain{
 	}
 
 	void MessageLoop::Post(){
-		auto test = 10;
+//		auto test = 10;
 
 	}
 	void MessageLoop::Send(){

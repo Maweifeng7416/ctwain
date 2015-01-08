@@ -2,6 +2,7 @@
 #include <iostream>
 #include <sstream>
 #include "MyTwainSession.h"
+#include "FreeImage.h"
 
 using namespace std;
 using namespace ctwain;
