@@ -88,13 +88,59 @@ namespace ctwain{
 	};
 
 	/// <summary>
-	/// Contains event data on the current data transfer.
+	/// Contains event data after whatever data from the source has been transferred.
 	/// </summary>
-	struct TransferredDataEventArgs{		
+	struct TransferredDataEventArgs{
 		/// <summary>
-		/// The data from native transfer.
+		/// Gets pointer to the complete data if the transfer was native.
+		/// The data will be freed once the event handler ends
+		/// so consumers must complete whatever processing before then.
+		/// For image type this data is DIB (Windows) or TIFF (Linux).
+		/// This pointer is already locked for the duration of this event.
 		/// </summary>
 		TW_HANDLE NativeData;
+
+		/// <summary>
+		/// Gets the final image information if applicable.
+		/// </summary>
+		/// <value>
+		/// The final image information.
+		/// </value>
+		std::unique_ptr<TW_IMAGEINFO> ImageInfo;
+	};
+
+	/// <summary>
+	/// The logical state of a TwainSession.
+	/// </summary>
+	enum class State{
+		/// <summary>
+		/// The starting state, corresponds to state 1.
+		/// </summary>
+		kDsmUnloaded = 1,
+		/// <summary>
+		/// The DSM library has been loaded, corresponds to state 2.
+		/// </summary>
+		kDsmLoaded = 2,
+		/// <summary>
+		/// The DSM has been opened, corresponds to state 3.
+		/// </summary>
+		kDsmOpened = 3,
+		/// <summary>
+		/// A data source has been opened, corresponds to state 4.
+		/// </summary>
+		kSourceOpened = 4,
+		/// <summary>
+		/// A data source has been enabled, corresponds to state 5.
+		/// </summary>
+		kSourceEnabled = 5,
+		/// <summary>
+		/// Data is ready for transfer from the source, corresponds to state 6.
+		/// </summary>
+		kTransferReady = 6,
+		/// <summary>
+		/// Data is being transferred, corresponds to state 7.
+		/// </summary>
+		kTransferring = 7
 	};
 
 	/// <summary>
@@ -103,44 +149,19 @@ namespace ctwain{
 	class TwainSession
 	{
 	public:
-		TwainSession() :state_{ 1 }, loop_{ nullptr }{}
+		TwainSession(){}
 		~TwainSession();
 		// all disabled for now until everything is working
-		TwainSession(const TwainSession&)=delete;            // Copy constructor
-		TwainSession(TwainSession&&)=delete;                 // Move constructor
-		TwainSession& operator=(const TwainSession&)=delete; // Copy assignment 
-		TwainSession& operator=(TwainSession&&)=delete;      // move assignment 
+		TwainSession(const TwainSession&) = delete;            // Copy constructor
+		TwainSession(TwainSession&&) = delete;                 // Move constructor
+		TwainSession& operator=(const TwainSession&) = delete; // Copy assignment 
+		TwainSession& operator=(TwainSession&&) = delete;      // move assignment 
 
 		/// <summary>
-		/// Gets the current state number as defined by the TWAIN spec.
+		/// Gets the current logical state as defined by the TWAIN spec.
 		/// </summary>
 		/// <returns></returns>
-		int state(){ return state_; }
-
-		/// <summary>
-		/// Quick flag to check if the DSM dll has been loaded.
-		/// </summary>
-		bool IsDsmInitialized(){ return state_ > 1; }
-
-		/// <summary>
-		/// Quick flag to check if the DSM has been opened.
-		/// </summary>
-		bool IsDsmOpen(){ return state_ > 2; }
-
-		/// <summary>
-		/// Quick flag to check if a source has been opened.
-		/// </summary>
-		bool IsSourceOpen(){ return state_ > 3; }
-
-		/// <summary>
-		/// Quick flag to check if a source has been enabled.
-		/// </summary>
-		bool IsSourceEnabled(){ return state_ > 4; }
-
-		/// <summary>
-		/// Quick flag to check if a source is in the transferring state.
-		/// </summary>
-		bool IsTransferring(){ return state_ > 5; }
+		State state(){ return state_; }
 
 		/// <summary>
 		/// Initializes the data source manager. This must be the first method used
@@ -152,7 +173,7 @@ namespace ctwain{
 		/// Forces the stepping down of an opened source when things gets out of control.
 		/// Used when session state and source state become out of sync.
 		/// </summary>
-		void ForceStepDown(int state);
+		void ForceStepDown(State state);
 
 
 		/// <summary>
@@ -160,12 +181,12 @@ namespace ctwain{
 		/// <see cref="CloseDsm" /> when done with a TWAIN session.
 		/// </summary>
 		/// <param name="window_handle">The window handle on Windows system to act as the parent.</param>
-		void OpenDsm(HWND window_handle = nullptr);
+		TW_UINT16 OpenDsm(HWND window_handle = nullptr);
 
 		/// <summary>
 		/// Closes the data source manager.
 		/// </summary>
-		void CloseDsm();
+		TW_UINT16 CloseDsm();
 
 		/// <summary>
 		/// Gets the manager status. Only call this at state 2 or higher.
@@ -262,8 +283,8 @@ namespace ctwain{
 		virtual void OnSourceDisabled(){}
 
 	private:
-		int state_;
-		class MessageLoop* loop_; // test
+		State state_ = State::kDsmUnloaded;
+		class MessageLoop* loop_ = nullptr;
 
 		TW_USERINTERFACE ui_;
 		TW_IDENTITY app_id_;
@@ -272,7 +293,8 @@ namespace ctwain{
 
 		void DisableSource();
 		void TryRegisterCallback();
-		void DoTransfer();
+		void HandleTransferReady();
+		void TransferNative(bool image);
 		void HandleDsmMessage(TW_UINT16);
 	};
 }

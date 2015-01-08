@@ -57,7 +57,7 @@ int APIENTRY _tWinMain(_In_ HINSTANCE hInstance,
 	}
 	else
 	{
-		if (twain.IsDsmInitialized()){
+		if (twain.state() == State::kDsmLoaded){
 			MessageBox(nullptr, L"Could not create window.", L"Error Initializing", MB_ICONERROR);
 		}
 		else{
@@ -120,7 +120,7 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 
 	ShowWindow(hWnd, nCmdShow);
 	UpdateWindow(hWnd);
-	if (twain.state() == 2)
+	if (twain.state() == State::kDsmLoaded)
 	{
 		twain.OpenDsm(hWnd);
 	}
@@ -159,14 +159,14 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			DestroyWindow(hWnd);
 			break;
 		case ID_FILE_SELECTSOURCE:
-			if (twain.state() > 2)
+			if (twain.state() >= State::kDsmOpened)
 			{
 				auto list = twain.GetSources();
 				auto def = twain.GetDefaultSource();
 
 				auto src = twain.ShowSourceSelector();
-				if (src){
-					auto twRC = twain.OpenSource(*src);
+				if (src.Id > 0){
+					auto twRC = twain.OpenSource(src);
 				}
 				else{
 					auto test = twain.GetDsmStatus();
@@ -189,7 +189,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		EndPaint(hWnd, &ps);
 		break;
 	case WM_DESTROY:
-		twain.ForceStepDown(2);
+		twain.ForceStepDown(State::kDsmLoaded);
 		PostQuitMessage(0);
 		break;
 	default:

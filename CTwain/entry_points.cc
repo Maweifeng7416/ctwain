@@ -97,6 +97,7 @@ namespace ctwain{
 	void EntryPoints::Free(TW_HANDLE handle){
 		if (memory_entry_.DSM_MemFree){
 			memory_entry_.DSM_MemFree(handle);
+			return;
 		}
 #ifdef TWH_CMP_MSC
 		GlobalFree(handle);
@@ -119,6 +120,7 @@ namespace ctwain{
 	void EntryPoints::Unlock(TW_HANDLE handle){
 		if (memory_entry_.DSM_MemUnlock){
 			memory_entry_.DSM_MemUnlock(handle);
+			return;
 		}
 #ifdef TWH_CMP_MSC
 		GlobalUnlock(handle);

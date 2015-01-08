@@ -16,8 +16,7 @@ int _tmain(int argc, _TCHAR* argv [])
 	MyTwainSession twain;
 	if (twain.Initialize()){
 		cout << "DSM initialized" << endl;
-		twain.OpenDsm();
-		if (twain.IsDsmOpen()){
+		if (twain.OpenDsm() == TWRC_SUCCESS){
 			cout << "DSM opened" << endl;
 
 

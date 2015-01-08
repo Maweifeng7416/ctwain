@@ -82,88 +82,95 @@ namespace ctwain{
 
 
 	bool TwainSession::Initialize(){
-		if (state_ < 2 && EntryPoints::InitializeDSM()){
+		if (state_ < State::kDsmLoaded && EntryPoints::InitializeDSM()){
+			state_ = State::kDsmLoaded;
 			OnFillAppId(app_id_);
-			state_ = 2;
 		}
-		return state_ == 2;
+		return state_ == State::kDsmLoaded;
 	}
 
 
-	void TwainSession::ForceStepDown(int state){
+	void TwainSession::ForceStepDown(State state){
 
-		if (state_ == 7 && state_ > state)
+		if (state_ == State::kTransferring && state_ > state)
 		{
 			TW_PENDINGXFERS xfer;
 			DsmEntry(true, DG_CONTROL, DAT_PENDINGXFERS, MSG_ENDXFER, &xfer);
-			state_ = 6;
+			state_ = State::kTransferReady;
 		}
-		if (state_ == 6 && state_ > state)
+		if (state_ == State::kTransferReady && state_ > state)
 		{
 			TW_PENDINGXFERS xfer;
 			DsmEntry(true, DG_CONTROL, DAT_PENDINGXFERS, MSG_RESET, &xfer);
-			state_ = 5;
+			state_ = State::kSourceEnabled;
 		}
-		if (state_ == 5 && state_ > state)
+		if (state_ == State::kSourceEnabled && state_ > state)
 		{
 			DisableSource();
-			state_ = 4;
+			state_ = State::kSourceOpened;
 		}
-		if (state_ == 4 && state_ > state)
+		if (state_ == State::kSourceOpened && state_ > state)
 		{
 			CloseSource();
-			state_ = 3;
+			state_ = State::kDsmOpened;
 		}
-		if (state_ == 3 && state_ > state)
+		if (state_ == State::kDsmOpened && state_ > state)
 		{
 			CloseDsm();
-			state_ = 2;
+			state_ = State::kDsmLoaded;
 		}
 	}
 
 
-	void TwainSession::OpenDsm(HWND hWnd)
+	TW_UINT16 TwainSession::OpenDsm(HWND hWnd)
 	{
-		if (hWnd){
-			loop_ = new MessageLoop{ hWnd };
-		}
-		else{
-			loop_ = new MessageLoop(this);
-		}
-		loop_->Post();
-
-		if (state_ == 2)
+		if (state_ == State::kDsmLoaded)
 		{
+			if (loop_){
+				delete loop_;
+				loop_ = nullptr;
+			}
+			if (hWnd){
+				loop_ = new MessageLoop{ hWnd };
+			}
+			else{
+				loop_ = new MessageLoop(this);
+			}
+
 			TW_UINT16 rc = DsmEntry(false, DG_CONTROL, DAT_PARENT, MSG_OPENDSM, &hWnd);
 			if (rc == TWRC_SUCCESS)
 			{
-				state_ = 3;
+				state_ = State::kDsmOpened;
 				EntryPoints::UpdateMemoryEntry(&app_id_);
 			}
+			return rc;
 		}
+		return TWRC_FAILURE;
 	}
-	void TwainSession::CloseDsm()
+	TW_UINT16 TwainSession::CloseDsm()
 	{
-		if (state_ == 3)
+		if (state_ == State::kDsmOpened)
 		{
 			auto handle = loop_->parent_handle();
 			TW_UINT16 rc = DsmEntry(false, DG_CONTROL, DAT_PARENT, MSG_CLOSEDSM, &handle);
 			if (rc == TWRC_SUCCESS)
 			{
-				state_ = 2;
+				state_ = State::kDsmLoaded;
 				EntryPoints::UpdateMemoryEntry(nullptr);
 				if (loop_){
 					delete loop_;
 					loop_ = nullptr;
 				}
 			}
+			return rc;
 		}
+		return TWRC_FAILURE;
 	}
 
 	TW_STATUS TwainSession::GetDsmStatus()
 	{
 		TW_STATUS status;
-		if (state_ > 1)
+		if (state_ >= State::kDsmLoaded)
 		{
 			DsmEntry(false, DG_CONTROL, DAT_STATUS, MSG_GET, &status);
 		}
@@ -172,7 +179,7 @@ namespace ctwain{
 	TW_STATUS TwainSession::GetSourceStatus()
 	{
 		TW_STATUS status;
-		if (state_ > 3)
+		if (state_ >= State::kSourceOpened)
 		{
 			DsmEntry(true, DG_CONTROL, DAT_STATUS, MSG_GET, &status);
 		}
@@ -182,7 +189,7 @@ namespace ctwain{
 	TW_IDENTITY TwainSession::ShowSourceSelector()
 	{
 		TW_IDENTITY src{ 0 };
-		if (state_ > 2)
+		if (state_ >= State::kDsmOpened)
 		{
 			auto twRC = DsmEntry(false, DG_CONTROL, DAT_IDENTITY, MSG_USERSELECT, &src);
 		}
@@ -191,7 +198,7 @@ namespace ctwain{
 	TW_IDENTITY TwainSession::GetDefaultSource()
 	{
 		TW_IDENTITY src{ 0 };
-		if (state_ > 2)
+		if (state_ >= State::kDsmOpened)
 		{
 			auto twRC = DsmEntry(false, DG_CONTROL, DAT_IDENTITY, MSG_GETDEFAULT, &src);
 		}
@@ -199,7 +206,7 @@ namespace ctwain{
 	}
 	std::vector<TW_IDENTITY> TwainSession::GetSources(){
 		std::vector<TW_IDENTITY> list;
-		if (state_ > 2){
+		if (state_ >= State::kDsmOpened){
 			TW_IDENTITY src{ 0 };
 			auto twRC = DsmEntry(false, DG_CONTROL, DAT_IDENTITY, MSG_GETFIRST, &src);
 			while (twRC == TWRC_SUCCESS){
@@ -214,9 +221,9 @@ namespace ctwain{
 	TW_UINT16 TwainSession::OpenSource(TW_IDENTITY& source)
 	{
 		TW_UINT16 twRC = TWRC_FAILURE;
-		if (state_ > 2 && state_ < 5)
+		if (state_ >= State::kDsmOpened && state_ < State::kSourceEnabled)
 		{
-			if (state_ == 4)
+			if (state_ == State::kSourceOpened)
 			{
 				CloseSource();
 			}
@@ -224,7 +231,7 @@ namespace ctwain{
 			twRC = DsmEntry(false, DG_CONTROL, DAT_IDENTITY, MSG_OPENDS, &source);
 			if (twRC == TWRC_SUCCESS)
 			{
-				state_ = 4;
+				state_ = State::kSourceOpened;
 				ds_id_ = source;
 				TryRegisterCallback();
 			}
@@ -234,12 +241,12 @@ namespace ctwain{
 	TW_UINT16 TwainSession::CloseSource()
 	{
 		TW_UINT16 twRC = TWRC_FAILURE;
-		if (state_ == 4)
+		if (state_ == State::kSourceOpened)
 		{
 			twRC = DsmEntry(false, DG_CONTROL, DAT_IDENTITY, MSG_CLOSEDS, &ds_id_);
 			if (twRC == TWRC_SUCCESS)
 			{
-				state_ = 3;
+				state_ = State::kDsmOpened;
 				CallbackHack::Instance = nullptr;
 			}
 		}
@@ -249,7 +256,7 @@ namespace ctwain{
 	TW_UINT16 TwainSession::EnableSource(EnableSourceMode mode, bool modal){
 
 		TW_UINT16 twRC = TWRC_FAILURE;
-		if (state_ == 4)
+		if (state_ == State::kSourceOpened)
 		{
 			ui_.hParent = loop_->parent_handle();
 			ui_.ModalUI = modal ? TRUE : FALSE;
@@ -259,7 +266,7 @@ namespace ctwain{
 				DsmEntry(true, DG_CONTROL, DAT_USERINTERFACE, MSG_ENABLEDS, &ui_);
 			if (twRC == TWRC_SUCCESS)
 			{
-				state_ = 5;
+				state_ = State::kSourceEnabled;
 			}
 		}
 		return twRC;
@@ -267,7 +274,7 @@ namespace ctwain{
 
 	bool TwainSession::IsTwainMessage(const MSG& msg)
 	{
-		if (state_ > 4)
+		if (state_ >= State::kSourceEnabled)
 		{
 			TW_EVENT evt{ const_cast<MSG*>(&msg) };
 			TW_UINT16 twRC = DsmEntry(true, DG_CONTROL, DAT_EVENT, MSG_PROCESSEVENT, &evt);
@@ -323,7 +330,7 @@ namespace ctwain{
 		auto twRC = DsmEntry(true, DG_CONTROL, DAT_USERINTERFACE, MSG_DISABLEDS, &ui_);
 		if (twRC == TWRC_SUCCESS)
 		{
-			state_ = 4;
+			state_ = State::kSourceOpened;
 			OnSourceDisabled();
 		}
 
@@ -351,7 +358,7 @@ namespace ctwain{
 			CallbackHack::Instance = nullptr;
 		}
 	}
-	void TwainSession::DoTransfer()
+	void TwainSession::HandleTransferReady()
 	{
 		TW_PENDINGXFERS pending;
 		TW_UINT16 rc = DsmEntry(true, DG_CONTROL, DAT_PENDINGXFERS, MSG_GET, &pending);;
@@ -364,7 +371,7 @@ namespace ctwain{
 
 			auto xferImage = true;
 			auto xferAudio = false;
-			TW_UINT16 xferGroup{ DG_IMAGE };
+			TW_UINT32 xferGroup{ DG_IMAGE };
 			if (DsmEntry(true, DG_CONTROL, DAT_XFERGROUP, MSG_GET, &xferGroup) == TWRC_SUCCESS){
 				xferAudio = (xferGroup & DG_AUDIO) == DG_AUDIO;
 				xferImage = xferGroup == 0 || (xferGroup & DG_IMAGE) == DG_IMAGE;
@@ -394,14 +401,33 @@ namespace ctwain{
 			{
 				if (!preXferArgs.CancelCurrent)
 				{
-					TW_UINT16 mech{ 0 };
+					TW_UINT16 mech{ TWSX_NATIVE };
 
-					//TODO: need ability to read cap value out now
+					//TODO: need ability to read xfer mech cap value out now
+
 					if (xferImage){
-
+						switch (mech){
+						case TWSX_MEMORY:
+							break;
+						case TWSX_FILE:
+							break;
+						case TWSX_MEMFILE:
+							break;
+						case TWSX_NATIVE:
+						default:
+							TransferNative(true);
+							break;
+						}
 					}
 					if (xferAudio){
-
+						switch (mech){
+						case TWSX_FILE:
+							break;
+						case TWSX_NATIVE:
+						default:
+							TransferNative(false);
+							break;
+						}
 					}
 				}
 				rc = DsmEntry(true, DG_CONTROL, DAT_PENDINGXFERS, MSG_ENDXFER, &pending);
@@ -411,22 +437,58 @@ namespace ctwain{
 
 		// some poorly written scanner drivers return failure on EndXfer so also check for pending count now.
 		// this may break with other sources but we'll see
-		if (pending.Count == 0 && state_ > 5)
+		if (pending.Count == 0 && state_ > State::kSourceEnabled)
 		{
-			state_ = 5;
+			state_ = State::kSourceEnabled;
 			DisableSource();
 		}
 	}
+
+	void TwainSession::TransferNative(bool image){
+		TW_MEMREF pData = nullptr;
+		
+		auto rc = image ?
+			DsmEntry(true, DG_IMAGE, DAT_IMAGENATIVEXFER, MSG_GET, &pData) :
+			DsmEntry(true, DG_AUDIO, DAT_AUDIONATIVEXFER, MSG_GET, &pData);
+		
+		
+		if (rc == TWRC_XFERDONE){
+			state_ = State::kTransferring;
+
+			TransferredDataEventArgs tde{ 0 };
+
+			if (image){
+				auto info = std::make_unique<TW_IMAGEINFO>();
+				if (DsmEntry(true, DG_IMAGE, DAT_IMAGEINFO, MSG_GET, info.get()) == TWRC_SUCCESS){
+					tde.ImageInfo = std::move(info);
+				}
+			}
+
+			tde.NativeData = EntryPoints::Lock(pData);
+			OnTransferredData(tde);
+			state_ = State::kTransferReady;
+			if (tde.NativeData){
+				EntryPoints::Unlock(pData);
+			}
+			if (pData){
+				EntryPoints::Free(pData);
+			}
+		}
+		else{
+			auto status = GetSourceStatus();
+		}
+	}
+
 	void TwainSession::HandleDsmMessage(TW_UINT16 msg){
 
 		switch (msg){
 		case MSG_XFERREADY:
-			state_ = 6;
-			DoTransfer();
+			state_ = State::kTransferReady;
+			HandleTransferReady();
 			break;
 		case MSG_CLOSEDSREQ:
 		case MSG_CLOSEDSOK:
-			ForceStepDown(5);
+			ForceStepDown(State::kSourceEnabled);
 			DisableSource();
 			break;
 		case MSG_DEVICEEVENT:

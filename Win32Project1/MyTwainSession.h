@@ -8,5 +8,9 @@ public:
 	virtual void OnDeviceEvent(const TW_DEVICEEVENT& deviceEvent) override;
 
 	virtual void OnTransferReady(ctwain::TransferReadyEventArgs& readyEvent) override;
+	
+	virtual void OnTransferredData(const ctwain::TransferredDataEventArgs& transferEvent) override;
+
+	virtual void OnSourceDisabled() override;
 };
 

@@ -75,13 +75,13 @@ namespace ctwain{
 		/// </summary>
 		/// <param name="size">The size in bytes.</param>
 		/// <returns>Handle to the allocated memory.</returns>
-		TW_HANDLE Alloc(TW_UINT32 size);
+		static TW_HANDLE Alloc(TW_UINT32 size);
 
 		/// <summary>
 		/// Function to free memory. 
 		/// </summary>
 		/// <param name="handle">The handle from <see cref="Allocate"/>.</param>
-		void Free(TW_HANDLE handle);
+		static void Free(TW_HANDLE handle);
 
 		/// <summary>
 		/// Function to lock some memory. Calls to this must be coupled with 
@@ -89,13 +89,13 @@ namespace ctwain{
 		/// </summary>
 		/// <param name="handle">The handle to allocated memory.</param>
 		/// <returns>Handle to the lock.</returns>
-		TW_MEMREF Lock(TW_HANDLE handle);
+		static TW_MEMREF Lock(TW_HANDLE handle);
 
 		/// <summary>
 		/// Function to unlock a previously locked memory region.
 		/// </summary>
 		/// <param name="handle">The handle from <see cref="Lock"/>.</param>
-		void Unlock(TW_HANDLE handle);
+		static void Unlock(TW_HANDLE handle);
 
 	private:
 		static HMODULE dsm_module_;
