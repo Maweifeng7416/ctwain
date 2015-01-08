@@ -264,12 +264,15 @@ namespace ctwain{
 			ui_.hParent = loop_->parent_handle();
 			ui_.ModalUI = modal ? TRUE : FALSE;
 			ui_.ShowUI = mode == EnableSourceMode::kHideUI ? FALSE : TRUE;
+			// set to this state first to start receiving msg from loop
+			state_ = State::kSourceEnabled;
 			twRC = mode == EnableSourceMode::kShowUIOnly ?
 				DsmEntry(true, DG_CONTROL, DAT_USERINTERFACE, MSG_ENABLEDSUIONLY, &ui_) :
 				DsmEntry(true, DG_CONTROL, DAT_USERINTERFACE, MSG_ENABLEDS, &ui_);
-			if (twRC == TWRC_SUCCESS)
+
+			if (twRC != TWRC_SUCCESS && twRC != TWRC_CHECKSTATUS)
 			{
-				state_ = State::kSourceEnabled;
+				state_ = State::kSourceOpened;
 			}
 		}
 		return twRC;
