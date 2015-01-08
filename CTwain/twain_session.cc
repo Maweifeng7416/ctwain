@@ -179,41 +179,33 @@ namespace ctwain{
 		return status;
 	}
 
-	std::unique_ptr<TW_IDENTITY> TwainSession::ShowSourceSelector()
+	TW_IDENTITY TwainSession::ShowSourceSelector()
 	{
+		TW_IDENTITY src{ 0 };
 		if (state_ > 2)
 		{
-			auto src = std::make_unique<TW_IDENTITY>();
-			auto twRC = DsmEntry(false, DG_CONTROL, DAT_IDENTITY, MSG_USERSELECT, src.get());
-			if (twRC == TWRC_SUCCESS){
-				return src;
-			}
+			auto twRC = DsmEntry(false, DG_CONTROL, DAT_IDENTITY, MSG_USERSELECT, &src);
 		}
-		return nullptr;
+		return src;
 	}
-
-	std::unique_ptr<TW_IDENTITY> TwainSession::GetDefaultSource()
+	TW_IDENTITY TwainSession::GetDefaultSource()
 	{
+		TW_IDENTITY src{ 0 };
 		if (state_ > 2)
 		{
-			auto src = std::make_unique<TW_IDENTITY>();
-			auto twRC = DsmEntry(false, DG_CONTROL, DAT_IDENTITY, MSG_GETDEFAULT, src.get());
-			if (twRC == TWRC_SUCCESS){
-				return src;
-			}
+			auto twRC = DsmEntry(false, DG_CONTROL, DAT_IDENTITY, MSG_GETDEFAULT, &src);
 		}
-		return nullptr;
+		return src;
 	}
-	std::vector<std::unique_ptr<TW_IDENTITY>> TwainSession::GetSources(){
-		std::vector<std::unique_ptr<TW_IDENTITY>> list;
+	std::vector<TW_IDENTITY> TwainSession::GetSources(){
+		std::vector<TW_IDENTITY> list;
 		if (state_ > 2){
-			auto src = std::make_unique<TW_IDENTITY>();
-			auto twRC = DsmEntry(false, DG_CONTROL, DAT_IDENTITY, MSG_GETFIRST, src.get());
+			TW_IDENTITY src{ 0 };
+			auto twRC = DsmEntry(false, DG_CONTROL, DAT_IDENTITY, MSG_GETFIRST, &src);
 			while (twRC == TWRC_SUCCESS){
-				list.push_back(std::move(src));
+				list.push_back(src);
 
-				src = std::make_unique<TW_IDENTITY>();
-				twRC = DsmEntry(false, DG_CONTROL, DAT_IDENTITY, MSG_GETNEXT, src.get());
+				twRC = DsmEntry(false, DG_CONTROL, DAT_IDENTITY, MSG_GETNEXT, &src);
 			}
 		}
 		return list;

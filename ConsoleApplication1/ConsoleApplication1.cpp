@@ -11,7 +11,6 @@
 using namespace std;
 using namespace ctwain;
 
-
 int _tmain(int argc, _TCHAR* argv [])
 {
 	MyTwainSession twain;
@@ -20,22 +19,23 @@ int _tmain(int argc, _TCHAR* argv [])
 		twain.OpenDsm();
 		if (twain.IsDsmOpen()){
 			cout << "DSM opened" << endl;
+
+
 			auto sources = twain.GetSources();
-			auto results = find_if(begin(sources), end(sources),
-				[](const std::unique_ptr<TW_IDENTITY>& test) { return strstr(test->ProductName, "TWAIN2 FreeImage Software Scanner") != nullptr; });
+			auto hit = find_if(begin(sources), end(sources),
+				[](const TW_IDENTITY& test) { return strstr(test.ProductName, "TWAIN2 FreeImage Software Scanner") != nullptr; });
 
-			auto hit = results != end(sources) ? results->get() : nullptr;
 
-			if (hit){
+			if (hit != end(sources)){
 				if (twain.OpenSource(*hit) == TWRC_SUCCESS){
-					cout << "Opened sample source" << endl;
+					cout << "Opened sample source " << hit->ProductName << endl;
 					/*if (twain.EnableSource(EnableSourceMode::kShowUI, false) == TWRC_SUCCESS){
 						cout << "Enabled sample source" << endl;
 
-					}
-					else{
+						}
+						else{
 						cout << "Failed to enable sample source" << endl;
-					}*/
+						}*/
 				}
 				else{
 					cout << "Failed to open sample source" << endl;

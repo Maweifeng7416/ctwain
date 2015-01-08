@@ -179,16 +179,16 @@ namespace ctwain{
 		/// <summary>
 		/// Try to show the built-in source selector dialog and return the selected source.
 		/// </summary>
-		std::unique_ptr<TW_IDENTITY> ShowSourceSelector();
+		TW_IDENTITY ShowSourceSelector();
 		/// <summary>
 		/// Gets the default source for this application.
 		/// </summary>
-		std::unique_ptr<TW_IDENTITY> GetDefaultSource();
+		TW_IDENTITY GetDefaultSource();
 		/// <summary>
 		/// Gets list of sources available in the system.
 		/// Only call this at state 2 or higher.
 		/// </summary>
-		std::vector<std::unique_ptr<TW_IDENTITY>> GetSources();
+		std::vector<TW_IDENTITY> GetSources();
 
 		/// <summary>
 		/// Opens the source for capability negotiation.
