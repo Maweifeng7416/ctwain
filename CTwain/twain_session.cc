@@ -80,7 +80,7 @@ namespace ctwain{
 		}
 	}
 
-	TW_UINT32 TwainSession::source_id(){
+	TW_UINT32 TwainSession::source_id() const{
 		return ds_id_.Id;
 	}
 
@@ -98,13 +98,13 @@ namespace ctwain{
 		if (state_ == State::kTransferring && state_ > state)
 		{
 			TW_PENDINGXFERS xfer;
-			DsmEntry(true, DG_CONTROL, DAT_PENDINGXFERS, MSG_ENDXFER, &xfer);
+			CallDsm(true, DG_CONTROL, DAT_PENDINGXFERS, MSG_ENDXFER, &xfer);
 			state_ = State::kTransferReady;
 		}
 		if (state_ == State::kTransferReady && state_ > state)
 		{
 			TW_PENDINGXFERS xfer;
-			DsmEntry(true, DG_CONTROL, DAT_PENDINGXFERS, MSG_RESET, &xfer);
+			CallDsm(true, DG_CONTROL, DAT_PENDINGXFERS, MSG_RESET, &xfer);
 			state_ = State::kSourceEnabled;
 		}
 		if (state_ == State::kSourceEnabled && state_ > state)
@@ -140,7 +140,7 @@ namespace ctwain{
 				loop_ = new MessageLoop(this);
 			}
 
-			TW_UINT16 rc = DsmEntry(false, DG_CONTROL, DAT_PARENT, MSG_OPENDSM, &hWnd);
+			TW_UINT16 rc = CallDsm(false, DG_CONTROL, DAT_PARENT, MSG_OPENDSM, &hWnd);
 			if (rc == TWRC_SUCCESS)
 			{
 				state_ = State::kDsmOpened;
@@ -155,7 +155,7 @@ namespace ctwain{
 		if (state_ == State::kDsmOpened)
 		{
 			auto handle = loop_->parent_handle();
-			TW_UINT16 rc = DsmEntry(false, DG_CONTROL, DAT_PARENT, MSG_CLOSEDSM, &handle);
+			TW_UINT16 rc = CallDsm(false, DG_CONTROL, DAT_PARENT, MSG_CLOSEDSM, &handle);
 			if (rc == TWRC_SUCCESS)
 			{
 				state_ = State::kDsmLoaded;
@@ -175,7 +175,7 @@ namespace ctwain{
 		TW_STATUS status{ 0 };
 		if (state_ >= State::kDsmLoaded)
 		{
-			DsmEntry(false, DG_CONTROL, DAT_STATUS, MSG_GET, &status);
+			CallDsm(false, DG_CONTROL, DAT_STATUS, MSG_GET, &status);
 		}
 		return status;
 	}
@@ -184,7 +184,7 @@ namespace ctwain{
 		TW_STATUS status{ 0 };
 		if (state_ >= State::kSourceOpened)
 		{
-			DsmEntry(true, DG_CONTROL, DAT_STATUS, MSG_GET, &status);
+			CallDsm(true, DG_CONTROL, DAT_STATUS, MSG_GET, &status);
 		}
 		return status;
 	}
@@ -194,7 +194,7 @@ namespace ctwain{
 		TW_IDENTITY src{ 0 };
 		if (state_ >= State::kDsmOpened)
 		{
-			DsmEntry(false, DG_CONTROL, DAT_IDENTITY, MSG_USERSELECT, &src);
+			CallDsm(false, DG_CONTROL, DAT_IDENTITY, MSG_USERSELECT, &src);
 		}
 		return src;
 	}
@@ -203,7 +203,7 @@ namespace ctwain{
 		TW_IDENTITY src{ 0 };
 		if (state_ >= State::kDsmOpened)
 		{
-			DsmEntry(false, DG_CONTROL, DAT_IDENTITY, MSG_GETDEFAULT, &src);
+			CallDsm(false, DG_CONTROL, DAT_IDENTITY, MSG_GETDEFAULT, &src);
 		}
 		return src;
 	}
@@ -211,11 +211,11 @@ namespace ctwain{
 		std::vector<TW_IDENTITY> list;
 		if (state_ >= State::kDsmOpened){
 			TW_IDENTITY src{ 0 };
-			auto twRC = DsmEntry(false, DG_CONTROL, DAT_IDENTITY, MSG_GETFIRST, &src);
+			auto twRC = CallDsm(false, DG_CONTROL, DAT_IDENTITY, MSG_GETFIRST, &src);
 			while (twRC == TWRC_SUCCESS){
 				list.push_back(src);
 
-				twRC = DsmEntry(false, DG_CONTROL, DAT_IDENTITY, MSG_GETNEXT, &src);
+				twRC = CallDsm(false, DG_CONTROL, DAT_IDENTITY, MSG_GETNEXT, &src);
 			}
 		}
 		return list;
@@ -231,7 +231,7 @@ namespace ctwain{
 				CloseSource();
 			}
 
-			twRC = DsmEntry(false, DG_CONTROL, DAT_IDENTITY, MSG_OPENDS, &source);
+			twRC = CallDsm(false, DG_CONTROL, DAT_IDENTITY, MSG_OPENDS, &source);
 			if (twRC == TWRC_SUCCESS)
 			{
 				state_ = State::kSourceOpened;
@@ -246,7 +246,7 @@ namespace ctwain{
 		TW_UINT16 twRC = TWRC_FAILURE;
 		if (state_ == State::kSourceOpened)
 		{
-			twRC = DsmEntry(false, DG_CONTROL, DAT_IDENTITY, MSG_CLOSEDS, &ds_id_);
+			twRC = CallDsm(false, DG_CONTROL, DAT_IDENTITY, MSG_CLOSEDS, &ds_id_);
 			if (twRC == TWRC_SUCCESS)
 			{
 				state_ = State::kDsmOpened;
@@ -267,8 +267,8 @@ namespace ctwain{
 			// set to this state first to start receiving msg from loop
 			state_ = State::kSourceEnabled;
 			twRC = mode == EnableSourceMode::kShowUIOnly ?
-				DsmEntry(true, DG_CONTROL, DAT_USERINTERFACE, MSG_ENABLEDSUIONLY, &ui_) :
-				DsmEntry(true, DG_CONTROL, DAT_USERINTERFACE, MSG_ENABLEDS, &ui_);
+				CallDsm(true, DG_CONTROL, DAT_USERINTERFACE, MSG_ENABLEDSUIONLY, &ui_) :
+				CallDsm(true, DG_CONTROL, DAT_USERINTERFACE, MSG_ENABLEDS, &ui_);
 
 			if (twRC != TWRC_SUCCESS && twRC != TWRC_CHECKSTATUS)
 			{
@@ -283,7 +283,7 @@ namespace ctwain{
 		if (state_ >= State::kSourceEnabled)
 		{
 			TW_EVENT evt{ const_cast<MSG*>(&msg) };
-			TW_UINT16 twRC = DsmEntry(true, DG_CONTROL, DAT_EVENT, MSG_PROCESSEVENT, &evt);
+			TW_UINT16 twRC = CallDsm(true, DG_CONTROL, DAT_EVENT, MSG_PROCESSEVENT, &evt);
 			if (twRC == TWRC_DSEVENT)
 			{
 				std::cout << "Received TWAIN message " << evt.TWMessage << " from loop" << std::endl;
@@ -294,7 +294,7 @@ namespace ctwain{
 		return false;
 	}
 
-	TW_UINT16 TwainSession::DsmEntry(bool includeSource, TW_UINT32 DG, TW_UINT16 DAT, TW_UINT16 MSG, TW_MEMREF pData)
+	TW_UINT16 TwainSession::CallDsm(bool includeSource, TW_UINT32 DG, TW_UINT16 DAT, TW_UINT16 MSG, TW_MEMREF pData)
 	{
 		return includeSource ?
 			EntryPoints::DSM_Entry(&app_id_, &ds_id_, DG, DAT, MSG, pData) :
@@ -333,7 +333,7 @@ namespace ctwain{
 
 	void TwainSession::DisableSource()
 	{
-		auto twRC = DsmEntry(true, DG_CONTROL, DAT_USERINTERFACE, MSG_DISABLEDS, &ui_);
+		auto twRC = CallDsm(true, DG_CONTROL, DAT_USERINTERFACE, MSG_DISABLEDS, &ui_);
 		if (twRC == TWRC_SUCCESS)
 		{
 			state_ = State::kSourceOpened;
@@ -350,12 +350,12 @@ namespace ctwain{
 		//if (app_id_.ProtocolMajor > 2 || (app_id_.ProtocolMajor >= 2 && app_id_.ProtocolMinor >= 3)){
 		//	// callback2
 		//	TW_CALLBACK2 callback{ funcPtr, 0, 0 };
-		//	twRC = DsmEntry(true, DG_CONTROL, DAT_CALLBACK2, MSG_REGISTER_CALLBACK, &callback);
+		//	twRC = CallDsm(true, DG_CONTROL, DAT_CALLBACK2, MSG_REGISTER_CALLBACK, &callback);
 		//}
 		//else{
 		//	// old callback
 		//	TW_CALLBACK callback{ funcPtr, 0, 0 };
-		//	twRC = DsmEntry(true, DG_CONTROL, DAT_CALLBACK, MSG_REGISTER_CALLBACK, &callback);
+		//	twRC = CallDsm(true, DG_CONTROL, DAT_CALLBACK, MSG_REGISTER_CALLBACK, &callback);
 		//}
 		//if (twRC == TWRC_SUCCESS){
 		//	CallbackHack::Instance = this;
@@ -367,7 +367,7 @@ namespace ctwain{
 	void TwainSession::HandleTransferReady()
 	{
 		TW_PENDINGXFERS pending;
-		TW_UINT16 rc = DsmEntry(true, DG_CONTROL, DAT_PENDINGXFERS, MSG_GET, &pending);;
+		TW_UINT16 rc = CallDsm(true, DG_CONTROL, DAT_PENDINGXFERS, MSG_GET, &pending);;
 
 		do
 		{
@@ -378,20 +378,20 @@ namespace ctwain{
 			auto xferImage = true;
 			auto xferAudio = false;
 			TW_UINT32 xferGroup{ DG_IMAGE };
-			if (DsmEntry(true, DG_CONTROL, DAT_XFERGROUP, MSG_GET, &xferGroup) == TWRC_SUCCESS){
+			if (CallDsm(true, DG_CONTROL, DAT_XFERGROUP, MSG_GET, &xferGroup) == TWRC_SUCCESS){
 				xferAudio = (xferGroup & DG_AUDIO) == DG_AUDIO;
 				xferImage = xferGroup == 0 || (xferGroup & DG_IMAGE) == DG_IMAGE;
 			}
 
 			if (xferImage){
 				auto info = std::make_unique<TW_IMAGEINFO>();
-				if (DsmEntry(true, DG_IMAGE, DAT_IMAGEINFO, MSG_GET, info.get()) == TWRC_SUCCESS){
+				if (CallDsm(true, DG_IMAGE, DAT_IMAGEINFO, MSG_GET, info.get()) == TWRC_SUCCESS){
 					preXferArgs.PendingImageInfo = std::move(info);
 				}
 			}
 			if (xferAudio){
 				auto info = std::make_unique<TW_AUDIOINFO>();
-				if (DsmEntry(true, DG_IMAGE, DAT_AUDIOINFO, MSG_GET, info.get()) == TWRC_SUCCESS){
+				if (CallDsm(true, DG_IMAGE, DAT_AUDIOINFO, MSG_GET, info.get()) == TWRC_SUCCESS){
 					preXferArgs.AudioInfo = std::move(info);
 				}
 			}
@@ -401,18 +401,46 @@ namespace ctwain{
 
 			if (preXferArgs.CancelAll)
 			{
-				rc = DsmEntry(true, DG_CONTROL, DAT_PENDINGXFERS, MSG_RESET, &pending);
+				rc = CallDsm(true, DG_CONTROL, DAT_PENDINGXFERS, MSG_RESET, &pending);
 			}
 			else
 			{
 				if (!preXferArgs.CancelCurrent)
 				{
-					TW_UINT16 mech{ TWSX_NATIVE };
-
-					//TODO: need ability to read xfer mech cap value out now
-
 					if (xferImage){
-						switch (mech){
+
+						// TODO: wrap cap gets into methods
+
+						TW_UINT16 xferMech{ 0 };
+
+						TW_CAPABILITY cap;
+						cap.Cap = ICAP_XFERMECH;
+						cap.ConType = TWON_DONTCARE16;
+						cap.hContainer = nullptr;
+
+
+						auto rc = CallDsm(true, DG_CONTROL, DAT_CAPABILITY, MSG_GETCURRENT, &cap);
+						if (rc == TWRC_SUCCESS){
+							EntryPoints::Lock(cap.hContainer);
+							if (cap.ConType == TWON_ONEVALUE){
+								auto test = static_cast<TW_ONEVALUE*>(cap.hContainer);
+								xferMech = static_cast<TW_UINT16>(test->Item);
+							}
+							EntryPoints::Unlock(cap.hContainer);
+						}
+						else{
+							auto stat = GetSourceStatus();
+							auto cc = stat.ConditionCode;
+							std::cout << cc;
+						}
+						if (cap.hContainer){
+							EntryPoints::Free(cap.hContainer);
+							cap.hContainer = nullptr;
+						}
+
+
+
+						switch (xferMech){
 						case TWSX_MEMORY:
 							break;
 						case TWSX_FILE:
@@ -425,18 +453,23 @@ namespace ctwain{
 							break;
 						}
 					}
-					if (xferAudio){
-						switch (mech){
+					/*if (xferAudio){
+						cap.Cap = ACAP_XFERMECH;
+						if (CallDsm(true, DG_CONTROL, DAT_CAPABILITY, MSG_GETCURRENT, &cap) == TWRC_SUCCESS){
+
+						}
+
+						switch (xferMechValue.Item){
 						case TWSX_FILE:
-							break;
+						break;
 						case TWSX_NATIVE:
 						default:
-							TransferNative(false);
-							break;
+						TransferNative(false);
+						break;
 						}
-					}
+						}*/
 				}
-				rc = DsmEntry(true, DG_CONTROL, DAT_PENDINGXFERS, MSG_ENDXFER, &pending);
+				rc = CallDsm(true, DG_CONTROL, DAT_PENDINGXFERS, MSG_ENDXFER, &pending);
 			}
 
 		} while (rc == TWRC_SUCCESS && pending.Count != 0);
@@ -454,8 +487,8 @@ namespace ctwain{
 		TW_MEMREF pData = nullptr;
 
 		auto rc = image ?
-			DsmEntry(true, DG_IMAGE, DAT_IMAGENATIVEXFER, MSG_GET, &pData) :
-			DsmEntry(true, DG_AUDIO, DAT_AUDIONATIVEXFER, MSG_GET, &pData);
+			CallDsm(true, DG_IMAGE, DAT_IMAGENATIVEXFER, MSG_GET, &pData) :
+			CallDsm(true, DG_AUDIO, DAT_AUDIONATIVEXFER, MSG_GET, &pData);
 
 
 		if (rc == TWRC_XFERDONE){
@@ -465,7 +498,7 @@ namespace ctwain{
 
 			if (image){
 				auto info = std::make_unique<TW_IMAGEINFO>();
-				if (DsmEntry(true, DG_IMAGE, DAT_IMAGEINFO, MSG_GET, info.get()) == TWRC_SUCCESS){
+				if (CallDsm(true, DG_IMAGE, DAT_IMAGEINFO, MSG_GET, info.get()) == TWRC_SUCCESS){
 					tde.ImageInfo = std::move(info);
 				}
 			}
@@ -500,7 +533,7 @@ namespace ctwain{
 		case MSG_DEVICEEVENT:
 		{
 			TW_DEVICEEVENT de{ 0 };
-			if (DsmEntry(true, DG_CONTROL, DAT_DEVICEEVENT, MSG_GET, &de) == TWRC_SUCCESS)
+			if (CallDsm(true, DG_CONTROL, DAT_DEVICEEVENT, MSG_GET, &de) == TWRC_SUCCESS)
 			{
 				OnDeviceEvent(de);
 			}

@@ -161,13 +161,13 @@ namespace ctwain{
 		/// Gets the numeric id of current data source.
 		/// </summary>
 		/// <returns></returns>
-		TW_UINT32 source_id();
+		TW_UINT32 source_id() const;
 
 		/// <summary>
 		/// Gets the current logical state as defined by the TWAIN spec.
 		/// </summary>
 		/// <returns></returns>
-		State state(){ return state_; }
+		State state() const{ return state_; }
 
 		/// <summary>
 		/// Initializes the data source manager. This must be the first method used
@@ -242,7 +242,7 @@ namespace ctwain{
 		bool IsTwainMessage(const MSG& message);
 
 		/// <summary>
-		/// Raw dsm entry call using current application id.
+		/// Perform DSM entry call using current application id.
 		/// </summary>
 		/// <param name="includeSource">Whether to pass the current source id.</param>
 		/// <param name="data_group">The DG_* value.</param>
@@ -250,7 +250,7 @@ namespace ctwain{
 		/// <param name="message">The MSG_* value.</param>
 		/// <param name="data">The data pointer.</param>
 		/// <returns></returns>
-		TW_UINT16 DsmEntry(
+		TW_UINT16 CallDsm(
 			bool includeSource,
 			TW_UINT32    data_group,
 			TW_UINT16    data_argument_type,
