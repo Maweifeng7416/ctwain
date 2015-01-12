@@ -26,6 +26,7 @@
 
 #include <memory>
 #include <vector>
+#include <string>
 #include "twain2.3.h"
 
 namespace ctwain{
@@ -143,6 +144,16 @@ namespace ctwain{
 		kTransferring = 7
 	};
 
+	enum class GetSingleType{
+		Current,
+		Default
+	};
+	enum class SetType{
+		Current,
+		Default,
+		Constraint
+	};
+
 	/// <summary>
 	/// Basic class for interfacing with TWAIN. You should only have one of this per application process.
 	/// </summary>
@@ -156,6 +167,11 @@ namespace ctwain{
 		TwainSession(TwainSession&&) = delete;                 // Move constructor
 		TwainSession& operator=(const TwainSession&) = delete; // Copy assignment 
 		TwainSession& operator=(TwainSession&&) = delete;      // move assignment 
+
+
+		////////////////////////////////////////////////////////////////////////
+		// basic methods
+		////////////////////////////////////////////////////////////////////////
 
 		/// <summary>
 		/// Gets the numeric id of current data source.
@@ -258,6 +274,33 @@ namespace ctwain{
 			TW_MEMREF    data);
 
 
+		////////////////////////////////////////////////////////////////////////
+		// capability methods
+		////////////////////////////////////////////////////////////////////////
+		TW_UINT16 CapGet(const TW_UINT16 capType, std::vector<TW_UINT32>& values);
+		TW_UINT16 CapGet(const TW_UINT16 capType, std::vector<TW_FIX32>& values);
+		TW_UINT16 CapGet(const TW_UINT16 capType, std::vector<TW_FRAME>& values);
+		TW_UINT16 CapGet(const TW_UINT16 capType, std::vector<std::string>& values);
+
+		TW_UINT16 CapGet(const TW_UINT16 capType, const GetSingleType getType, TW_UINT32& value);
+		TW_UINT16 CapGet(const TW_UINT16 capType, const GetSingleType getType, TW_FIX32& value);
+		TW_UINT16 CapGet(const TW_UINT16 capType, const GetSingleType getType, TW_FRAME& value);
+		TW_UINT16 CapGet(const TW_UINT16 capType, const GetSingleType getType, std::string& value);
+
+		TW_UINT16 CapSet(const TW_UINT16 capType, const SetType setType, TW_UINT32& value);
+		TW_UINT16 CapSet(const TW_UINT16 capType, const SetType setType, TW_FIX32& value);
+		TW_UINT16 CapSet(const TW_UINT16 capType, const SetType setType, TW_FRAME& value);
+		TW_UINT16 CapSet(const TW_UINT16 capType, const SetType setType, std::string& value);
+
+		/*TW_UINT16 CapSet(const TW_UINT16 capType, TW_ONEVALUE& value);
+		TW_UINT16 CapSet(const TW_UINT16 capType, TW_ARRAY& value);
+		TW_UINT16 CapSet(const TW_UINT16 capType, TW_ENUMERATION& value);
+		TW_UINT16 CapSet(const TW_UINT16 capType, TW_RANGE& value);*/
+
+
+		////////////////////////////////////////////////////////////////////////
+		// "event" type methods
+		////////////////////////////////////////////////////////////////////////
 
 		/// <summary>
 		/// Called when the application id needs to be populated.

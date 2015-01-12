@@ -408,37 +408,8 @@ namespace ctwain{
 				if (!preXferArgs.CancelCurrent)
 				{
 					if (xferImage){
-
-						// TODO: wrap cap gets into methods
-
-						TW_UINT16 xferMech{ 0 };
-
-						TW_CAPABILITY cap;
-						cap.Cap = ICAP_XFERMECH;
-						cap.ConType = TWON_DONTCARE16;
-						cap.hContainer = nullptr;
-
-
-						auto rc = CallDsm(true, DG_CONTROL, DAT_CAPABILITY, MSG_GETCURRENT, &cap);
-						if (rc == TWRC_SUCCESS){
-							EntryPoints::Lock(cap.hContainer);
-							if (cap.ConType == TWON_ONEVALUE){
-								auto test = static_cast<TW_ONEVALUE*>(cap.hContainer);
-								xferMech = static_cast<TW_UINT16>(test->Item);
-							}
-							EntryPoints::Unlock(cap.hContainer);
-						}
-						else{
-							auto stat = GetSourceStatus();
-							auto cc = stat.ConditionCode;
-							std::cout << cc;
-						}
-						if (cap.hContainer){
-							EntryPoints::Free(cap.hContainer);
-							cap.hContainer = nullptr;
-						}
-
-
+						TW_UINT32 xferMech;
+						CapGet(ICAP_XFERMECH, GetSingleType::Current, xferMech);
 
 						switch (xferMech){
 						case TWSX_MEMORY:
@@ -453,21 +424,19 @@ namespace ctwain{
 							break;
 						}
 					}
-					/*if (xferAudio){
-						cap.Cap = ACAP_XFERMECH;
-						if (CallDsm(true, DG_CONTROL, DAT_CAPABILITY, MSG_GETCURRENT, &cap) == TWRC_SUCCESS){
+					if (xferAudio){
+						TW_UINT32 xferMech;
+						CapGet(ACAP_XFERMECH, GetSingleType::Current, xferMech);
 
-						}
-
-						switch (xferMechValue.Item){
+						switch (xferMech){
 						case TWSX_FILE:
-						break;
+							break;
 						case TWSX_NATIVE:
 						default:
-						TransferNative(false);
-						break;
+							TransferNative(false);
+							break;
 						}
-						}*/
+					}
 				}
 				rc = CallDsm(true, DG_CONTROL, DAT_PENDINGXFERS, MSG_ENDXFER, &pending);
 			}

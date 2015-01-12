@@ -88,6 +88,7 @@
     <ClCompile Include="entry_points.cc" />
     <ClCompile Include="message_loop.cc" />
     <ClCompile Include="twain_session.cc" />
+    <ClCompile Include="twain_session_caps.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="CTwain.licenseheader" />

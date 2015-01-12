@@ -44,6 +44,9 @@
     <ClCompile Include="message_loop.cc">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="twain_session_caps.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="CTwain.licenseheader" />
