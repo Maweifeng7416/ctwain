@@ -413,10 +413,13 @@ namespace ctwain{
 
 						switch (xferMech){
 						case TWSX_MEMORY:
+							TransferMemory();
 							break;
 						case TWSX_FILE:
+							TransferFile(true);
 							break;
 						case TWSX_MEMFILE:
+							TransferMemoryFile();
 							break;
 						case TWSX_NATIVE:
 						default:
@@ -430,6 +433,7 @@ namespace ctwain{
 
 						switch (xferMech){
 						case TWSX_FILE:
+							TransferFile(false);
 							break;
 						case TWSX_NATIVE:
 						default:
@@ -485,6 +489,74 @@ namespace ctwain{
 		else{
 			//auto status = GetSourceStatus();
 		}
+	}
+
+	void TwainSession::TransferFile(bool image){
+		TW_SETUPFILEXFER fileInfo;
+
+		auto rc = CallDsm(true, DG_CONTROL, DAT_SETUPFILEXFER, MSG_GET, &fileInfo);
+		if (rc == TWRC_SUCCESS){
+			rc = image ?
+				CallDsm(true, DG_IMAGE, DAT_IMAGEFILEXFER, MSG_GET, nullptr) :
+				CallDsm(true, DG_AUDIO, DAT_AUDIOFILEXFER, MSG_GET, nullptr);
+			if (rc == TWRC_XFERDONE){
+				state_ = State::kTransferring;
+
+				TransferredDataEventArgs tde{ 0 };
+
+				if (image){
+					auto info = std::make_unique<TW_IMAGEINFO>();
+					if (CallDsm(true, DG_IMAGE, DAT_IMAGEINFO, MSG_GET, info.get()) == TWRC_SUCCESS){
+						tde.ImageInfo = std::move(info);
+					}
+				}
+
+				tde.FileDataPath = std::string{ fileInfo.FileName };
+				OnTransferredData(tde);
+
+				state_ = State::kTransferReady;
+			}
+		}
+
+	}
+	void TwainSession::TransferMemory(){
+		// TODO: implement
+	}
+
+	void TwainSession::TransferMemoryFile(){
+		TW_SETUPMEMXFER memInfo;
+		TW_SETUPFILEXFER fileInfo;
+
+		if (CallDsm(true, DG_CONTROL, DAT_SETUPFILEXFER, MSG_GET, &fileInfo) == TWRC_SUCCESS &&
+			CallDsm(true, DG_CONTROL, DAT_SETUPMEMXFER, MSG_GET, &memInfo) == TWRC_SUCCESS){
+
+			TW_IMAGEMEMXFER xferInfo;
+			xferInfo.Memory.Flags = TWMF_APPOWNS | TWMF_POINTER;
+			xferInfo.Memory.Length = memInfo.Preferred;
+			xferInfo.Memory.TheMem = EntryPoints::Alloc(memInfo.Preferred);
+
+			if (xferInfo.Memory.TheMem != nullptr){
+				TW_UINT16 rc{ 0 };
+				do{
+					rc = CallDsm(true, DG_IMAGE, DAT_IMAGEMEMFILEXFER, MSG_GET, &xferInfo);
+
+					if (rc == TWRC_SUCCESS || rc == TWRC_XFERDONE){
+						state_ = State::kTransferring;
+						EntryPoints::Lock(xferInfo.Memory.TheMem);
+
+						// TODO: do something
+
+
+
+						EntryPoints::Unlock(xferInfo.Memory.TheMem);
+					}
+				} while (rc == TWRC_SUCCESS);
+
+				state_ = State::kTransferReady;
+				EntryPoints::Free(xferInfo.Memory.TheMem);
+			}
+		}
+
 	}
 
 	void TwainSession::HandleDsmMessage(TW_UINT16 msg){

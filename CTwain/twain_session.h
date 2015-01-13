@@ -108,6 +108,16 @@ namespace ctwain{
 		/// The final image information.
 		/// </value>
 		std::unique_ptr<TW_IMAGEINFO> ImageInfo;
+		
+		/// <summary>
+		/// Gets the file path if transfer is for file.
+		/// </summary>
+		std::string FileDataPath;
+		
+		/// <summary>
+		/// Gets the iamge file format if applicable.
+		/// </summary>
+		TW_UINT16 ImageFileFormat;
 	};
 
 	/// <summary>
@@ -170,7 +180,7 @@ namespace ctwain{
 
 
 		////////////////////////////////////////////////////////////////////////
-		// basic methods
+		// basic twain methods
 		////////////////////////////////////////////////////////////////////////
 
 		/// <summary>
@@ -344,6 +354,9 @@ namespace ctwain{
 		void TryRegisterCallback();
 		void HandleTransferReady();
 		void TransferNative(bool image);
+		void TransferFile(bool image);
+		void TransferMemory();
+		void TransferMemoryFile();
 		void HandleDsmMessage(TW_UINT16);
 	};
 }
